@@ -39,3 +39,12 @@ g.theodoroy@gmail.com
 - Vangelis Karafillidis
 
 Thanks for acceptance, advices, encourage !!!
+
+
+
+### Donate
+
+**FET - edit + print is free**. If you like you can treat me a coffee...
+ 
+[<img src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif">](https://www.paypal.com/donate/?hosted_button_id=C2VEYT3GPPNY4)
+
