@@ -1,0 +1,1714 @@
+<!-- 
+
+This "program" was created in February 2025 by
+    George Theodoroy
+    g.theodoroy[at]gmail.com 
+
+It is provided as is under "MIT License"
+    https://opensource.org/license/mit
+
+-->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FET - edit + print</title>
+    <style>
+        :root {
+            --tile-width: 30px;
+            --padding: 0.75px;
+            --margin: 0.75px;
+            --font-size: 16px
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            font-size: var(--font-size);
+            font-weight: normal;
+        }
+
+        .container {
+            background-color: #f5fbff;
+            color: #11496e;
+            height: 230px;
+            width: 500px;
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 1px solid #2b375e;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        h1 {
+            margin-top: 50px;
+            font-size: 45px;
+        }
+
+        table {
+            border-collapse: collapse;
+            margin-top: 25px;
+        }
+
+        th,
+        td {
+            border: 1px solid black;
+            padding-bottom: var(--padding);
+            padding-left: var(--padding);
+            padding-right: var(--padding);
+            margin-bottom: var(--margin);
+            --mf: 2;
+            min-width: calc((var(--tile-width) + (var(--padding) * var(--mf)) + (var(--margin) * var(--mf))));
+        }
+
+        td.hour {
+            --mf: 2;
+            max-width: calc(var(--tile-width) + var(--padding) * var(--mf) + var(--margin) * (var(--mf) + 1));
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        td.program {
+            --mf: 2;
+            max-width: calc(var(--tile-width) + var(--padding) * var(--mf) + var(--margin) * (var(--mf) + 1));
+        }
+
+        td.text-center {
+            text-align: center;
+        }
+
+        td.text-small {
+            font-size: calc(var(--font-size)*5/6);
+        }
+
+        td.not-av {
+            background-image: radial-gradient(circle, rgb(203 213 225) 2px, #fff 2px);
+        }
+
+        span {
+            width: var(--tile-width);
+        }
+
+        span.w-2 {
+            --mf: 2;
+            width: calc((var(--tile-width) + (var(--padding) * var(--mf)) + var(--margin) * var(--mf)) * var(--mf))
+        }
+
+        span.w-3 {
+            --mf: 3;
+            width: calc((var(--tile-width) + (var(--padding) * var(--mf)) + (var(--margin) * (var(--mf) - 1))) * var(--mf))
+        }
+
+        span.w-4 {
+            --mf: 4;
+            width: calc((var(--tile-width) + (var(--padding) * var(--mf)) + (var(--margin) * (var(--mf) - 1))) * var(--mf))
+        }
+
+        span.w-5 {
+            --mf: 5;
+            width: calc((var(--tile-width) + (var(--padding) * var(--mf)) + (var(--margin) * (var(--mf) - 1))) * var(--mf))
+        }
+
+        td.w-3 {
+            --mf: 6;
+            width: calc((var(--tile-width) + (var(--padding) * var(--mf)) + (var(--margin) * (var(--mf) + 1))) * var(--mf))
+        }
+
+        .drag-span {
+            background-color: #e3f2fd;
+            padding: var(--padding);
+            margin: var(--margin);
+            cursor: move;
+            border: 1px solid #90caf9;
+            border-radius: 4px;
+            user-select: none;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        .warn-span {
+            border-bottom: 3px solid #b80404;
+        }
+
+        .display-inline-block {
+            display: inline-block;
+        }
+
+        .display-none {
+            display: none;
+        }
+
+        .dragging {
+            opacity: 0.8;
+            border-style: dashed;
+        }
+
+        .highlight {
+            background-color: #ddf314;
+        }
+
+        .spot-expelled {
+            background-color: #fdc9c9;
+        }
+
+        .spot-last-cell {
+            background-color: #eff7a7;
+        }
+
+        .no-drag {
+            pointer-events: none;
+        }
+
+        td.apothiki {
+            border: none;
+            min-width: calc(var(--tile-width)*3);
+            background-color: #fafafa;
+        }
+
+        td.apothiki>* {
+            vertical-align: middle;
+        }
+
+        td.footer {
+            border: none;
+            padding-top: 5px;
+            font-size: 10px;
+            color: #6c6d6e;
+            text-align: center;
+            max-width: var(--tile-width);
+            word-wrap: break-word;
+            background-color: #fafafa;
+        }
+
+        div.whiteboard {
+            position: fixed;
+            top: 5px;
+            left: 50%;
+            font-weight: normal;
+            font-size: 16px;
+            background-color: #fafafa;
+            padding: 5px;
+            margin: var(--margin);
+            border-radius: 4px;
+            border: 1px solid;
+            border-color: #eeeeee;
+        }
+
+        td.strike {
+            text-decoration: line-through;
+        }
+
+        #tablediv {
+            display: inline-block;
+            margin: auto;
+        }
+
+        #undo-redo {
+            position: fixed;
+            top: 2px;
+            left: 5px;
+        }
+
+        .undo-redo-button {
+            margin: 0px 2px 0px 2px;
+            padding: 0px 5px 0px 5px;
+            background-color: #fafafa;
+            border-radius: 4px;
+            border: 1px solid;
+            border-color: #eeeeee;
+            cursor: pointer;
+        }
+
+        #tablecontainer {
+            display: flex;
+        }
+
+        .gth {
+            position: fixed;
+            bottom: 1px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgb(155, 155, 155);
+            text-align: center;
+            text-decoration: none;
+            font-size: 12px;
+        }
+
+        .a-gth {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        @media print {
+            .no-print {
+                display: none;
+            }
+        }
+
+        /* The Modal (background) */
+        .modal {
+            display: none;
+            /* Hidden by default */
+            position: fixed;
+            /* Stay in place */
+            z-index: 1;
+            /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%;
+            /* Full width */
+            height: 100%;
+            /* Full height */
+            overflow: auto;
+            /* Enable scroll if needed */
+            background-color: rgba(0, 0, 0, 0.4);
+            /* Black w/ opacity */
+        }
+
+        /* Modal Content/Box */
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            /* 15% from the top and centered */
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            /* Could be more or less, depending on screen size */
+            max-width: 600px;
+            border-radius: 5px;
+        }
+
+        /* Close Button */
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: normal;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        /* Modal Header */
+        .modal-header {
+            padding: 10px 0;
+            border-bottom: 1px solid #ddd;
+        }
+
+        /* Modal Body */
+        .modal-body {
+            padding: 15px 0;
+        }
+
+        /* Error Modal Styles */
+        .error-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .error-modal-content {
+            background-color: #ffe6e6;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #ff4444;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 5px;
+            position: relative;
+        }
+
+        .error-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            color: #cc0000;
+        }
+
+        .error-icon {
+            font-size: 24px;
+            margin-right: 10px;
+        }
+
+        .error-title {
+            font-size: 20px;
+            font-weight: normal;
+        }
+
+        .error-message {
+            margin: 10px 0;
+            color: #333;
+        }
+
+        .error-close-btn {
+            background-color: #cc0000;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            float: right;
+        }
+
+        .error-close-btn:hover {
+            background-color: #b30000;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="container" class="container">
+        <h1>FET - edit + print</h1>
+        <p>Please input a locked (data_and_timetable) fet file</p>
+        <input type="file" id="xmlFileInput" accept=".fet">
+    </div>
+
+    <div id="undo-redo">
+        <div id="refresh" onclick="window.location.reload()" class="undo-redo-button display-inline-block no-print"
+            title="Reload">&#10227;</div>
+        <div id="aboutBtn" class="undo-redo-button display-inline-block no-print" title="About">&quest;</div>
+        <div id="down" onclick="downloadXml()" class="undo-redo-button display-none no-print" title="Download fet file">
+            &dArr;</div>
+        <div id="prev" onclick="prev()" class="undo-redo-button display-none no-print" title="Undo">&larr;</div>
+        <div id="next" onclick="next()" class="undo-redo-button display-none no-print" title="Redo">&rarr;</div>
+    </div>
+
+    <div id="tablecontainer">
+        <div id="tablediv">
+            <h2 id='title'>&nbsp;</h2>
+
+            <table id="programTable">
+                <thead></thead>
+                <tbody></tbody>
+                <tfoot></tfoot>
+            </table>
+        </div>
+
+        <div class="gth  no-print">
+            <span>copyright: George Theodoroy, licence: MIT Licence, mail: </span>
+            <a class="a-gth" href="mailto:g.theodoroy@gmail.com?subject=FET-edit+print"
+                title="mail to: George Theodoroy">GΘ@2025</a>
+        </div>
+
+    </div>
+
+    <div id="whiteboard" class="whiteboard display-none"></div>
+
+    <!-- The Modal -->
+    <div id="aboutModal" class="modal">
+        <!-- Modal content -->
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="close">&times;</span>
+                <h2>About FET - edit + print</h2>
+            </div>
+            <div class="modal-body">
+                <p>This "program" was created in February 2025 by:</p>
+                <blockquote>
+                    <p>George Theodoroy</p>
+                </blockquote>
+                <blockquote>
+                    <p>email: g.theodoroy&commat;gmail.com</p>
+                </blockquote>
+                <p>It is provided as is under "MIT License": https://opensource.org/license/mit</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="errorModal" class="error-modal">
+        <div class="error-modal-content">
+            <div class="error-header">
+                <div class="error-icon">&#9888;</div>
+                <div class="error-title" id="errorTitle"></div>
+            </div>
+            <div class="error-message" id="errorMessage"></div>
+            <button class="error-close-btn" onclick="closeError()">OK</button>
+        </div>
+    </div>
+
+    <script>
+
+        const showColors = true
+        const spotExpellDuration = 7000
+
+        const borderWidth = 'medium';
+        // removes lightgreen background of row and green background of cells
+        const removeBackground = (cell) => {
+            draggedElement.parentElement.parentElement.parentElement.rows[draggedElement.getAttribute('row') - 2].style.background = ''
+            Array.from(draggedElement.parentElement.parentElement.parentElement.rows[draggedElement.getAttribute('row') - 2].cells)
+                .forEach(c => c.style.background = '')
+        }
+
+        // sets lightgreen background to teacher row 
+        // sets green background to cells where student-class is missing
+        const setBackgroundGreen = (cell) => {
+            draggedElement.parentElement.parentElement.parentElement.rows[draggedElement.getAttribute('row') - 2].style.background = '#cfffd7'
+            const dragElTmima = draggedElement.getAttribute('tmima')
+            const possiblePositions = Array.from(draggedElement.parentElement.parentElement.parentElement.parentElement.tFoot.rows[0].cells).filter(c => c.innerText !== '')
+            possiblePositions.forEach(p => {
+                if (p.innerText.includes(dragElTmima)) {
+                    if (p.parentElement.parentElement.parentElement.tBodies[0].rows[draggedElement.getAttribute('row') - 2].cells[p.cellIndex].classList.contains('not-av')) { return }
+                    p.parentElement.parentElement.parentElement.tBodies[0].rows[draggedElement.getAttribute('row') - 2].cells[p.cellIndex].style.background = 'green'
+                }
+            })
+        }
+
+        // global variables
+        let loadedXml = null;
+        let xmlName = null;
+        let draggedElement = null;
+        let apothikiColumnIndex = null;
+        let hoursLength = null
+        let tmimataArray = []
+        let noTeacher = false;
+
+        // add event listener to file element
+        document.getElementById('xmlFileInput').addEventListener('change', handleFileSelect, false);
+
+        function handleFileSelect(event) {
+
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // set name of file for later use
+            xmlName = file.name
+
+            // read fet file
+            const reader = new FileReader();
+
+            reader.onload = function (e) {
+                try {
+
+                    const xmlContent = e.target.result;
+                    const xmlDoc = new window.DOMParser().parseFromString(xmlContent, "text/xml")
+                    // Check for parsing errors
+                    const errorNodes = xmlDoc.getElementsByTagName("parsererror");
+                    if (errorNodes.length > 0) {
+                        throw new Error('Error parsing XML');
+                    }
+
+                    // Process the XML
+                    displayXMLContent(xmlDoc);
+
+                    // Store modified XML
+                    const serializer = new XMLSerializer();
+                    loadedXml = serializer.serializeToString(xmlDoc);
+
+                } catch (error) {
+                    console.log(`Error: ${error.message}`);
+                    showError('Error', 'Error reading - loading data from "' + xmlName + '".')
+                }
+            };
+
+            reader.onerror = function () {
+                console.log('Error reading file');
+                showError('Error', 'Error reading - loading data from "' + xmlName + '".')
+            };
+
+            reader.readAsText(file);
+
+            // save filename for later use
+            xmlName = file.name
+
+            // set UI - set title - show-hide buttons first-screen
+            document.getElementById('xmlFileInput').value = '';
+            document.getElementById('container').style.display = 'none';
+            document.getElementById('title').textContent = file.name;
+            document.getElementById('prev').classList.remove('display-none')
+            document.getElementById('prev').classList.add('display-inline-block')
+            document.getElementById('next').classList.remove('display-none')
+            document.getElementById('next').classList.add('display-inline-block')
+            document.getElementById('down').classList.remove('display-none')
+            document.getElementById('down').classList.add('display-inline-block')
+        }
+
+        // Download modified XML
+        function downloadXml() {
+            if (!loadedXml) {
+                alert('Please load an XML file first!');
+                return;
+            }
+
+            // load xml to DOM
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(loadedXml, "application/xml");
+
+            // get all ConstraintActivityPreferredStartingTime
+            const ConstraintActivityPreferredStartingTime = xmlDoc.evaluate('//fet/Time_Constraints_List/ConstraintActivityPreferredStartingTime', xmlDoc, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+
+            // get all cards
+            let allSpans = Array.from(document.querySelectorAll(`.drag-span`))
+
+            for (i = 0; i < ConstraintActivityPreferredStartingTime.snapshotLength; i++) {
+                xmlElement = ConstraintActivityPreferredStartingTime.snapshotItem(i)
+                // get Activity_Id and find spans with the same id
+                const id = xmlElement.getElementsByTagName('Activity_Id')[0].textContent
+                //const span = Array.from(document.querySelectorAll(`span[id="${id}"]`))
+                const span = allSpans.filter(sp => sp.id == id)
+
+                // cards with same id might be 1 or 2 ( 2 when are 2 teacher at a class)
+                // remove items to finally track if all of them are processed 
+                for (j = 0; j < span.length; j++) {
+                    allSpans.splice(allSpans.indexOf(span[j]), 1)
+                }
+
+                // every cell (span.parenElement) has attributes of Day and Hour
+                // warehouse cells have not
+                // if cell has Day and Hour card is in program. Set values to xml
+                if (span[0].parentElement.getAttribute('day')) {
+                    xmlElement.getElementsByTagName('Preferred_Day')[0].textContent = span[0].parentElement.getAttribute('day')
+                    xmlElement.getElementsByTagName('Preferred_Hour')[0].textContent = span[0].parentElement.getAttribute('hour')
+                } else {
+                    // if no Day (warehouse) remove node element from xml
+                    xmlElement.parentElement.removeChild(xmlElement);
+                }
+            }
+
+            // if allSpans contains entries must append them to xml
+
+            // filter to exclude cards in warehouse
+            allSpans = allSpans.filter(sp => !(sp.getAttribute('col') == apothikiColumnIndex))
+
+            //remove the remaining double card od cards with same id (2 teachers in 1 class)
+            let toRemove = []
+            for (i in allSpans) {
+                // find cards with same id 
+                sameIdSpans = allSpans.filter(sp => sp.id == allSpans[i].id)
+                if (sameIdSpans.length > 1) {
+                    // if they are more than one it means that two teachers are in the same class
+                    // i save as key => value card.id => index to remove
+                    toRemove[allSpans.findIndex(item => item.id === sameIdSpans[1].id)] = i
+                }
+            }
+            //  sort descending to avoid array index undefined
+            var keys = Object.keys(toRemove).sort(function (a, b) { return b - a; });
+            for (var i = 0; i < keys.length; i++) {
+                allSpans.splice(toRemove[keys[i]], 1);
+            }
+
+            // append remaining allSpans entries to xml
+
+            //  <ConstraintActivityPreferredStartingTime>
+            // 	    <Weight_Percentage>100</Weight_Percentage>
+            // 	    <Activity_Id>134</Activity_Id>
+            // 	    <Preferred_Day>Πε</Preferred_Day>
+            // 	    <Preferred_Hour>2</Preferred_Hour>
+            // 	    <Permanently_Locked>false</Permanently_Locked>
+            // 	    <Active>true</Active>
+            // 	    <Comments></Comments>
+            // </ConstraintActivityPreferredStartingTime>
+
+            const TimeConstraintsList = xmlDoc.getElementsByTagName('Time_Constraints_List')
+
+            for (i = 0; i < allSpans.length; i++) {
+                const newElem = xmlDoc.createElement("ConstraintActivityPreferredStartingTime");
+
+                let newElemChild = xmlDoc.createElement("Weight_Percentage");
+                let newText = xmlDoc.createTextNode(100);
+                newElemChild.appendChild(newText)
+                newElem.appendChild(newElemChild)
+
+                newElemChild = xmlDoc.createElement("Activity_Id");
+                newText = xmlDoc.createTextNode(allSpans[i].id);
+                newElemChild.appendChild(newText)
+                newElem.appendChild(newElemChild)
+
+                newElemChild = xmlDoc.createElement("Preferred_Day");
+                newText = xmlDoc.createTextNode(allSpans[i].parentElement.getAttribute('day'));
+                newElemChild.appendChild(newText)
+                newElem.appendChild(newElemChild)
+
+                newElemChild = xmlDoc.createElement("Preferred_Hour");
+                newText = xmlDoc.createTextNode(allSpans[i].parentElement.getAttribute('hour'));
+                newElemChild.appendChild(newText)
+                newElem.appendChild(newElemChild)
+
+                newElemChild = xmlDoc.createElement("Permanently_Locked");
+                newText = xmlDoc.createTextNode('false');
+                newElemChild.appendChild(newText)
+                newElem.appendChild(newElemChild)
+
+                newElemChild = xmlDoc.createElement("Active");
+                newText = xmlDoc.createTextNode('true');
+                newElemChild.appendChild(newText)
+                newElem.appendChild(newElemChild)
+
+                newElemChild = xmlDoc.createElement("Comments");
+                newElem.appendChild(newElemChild)
+
+                TimeConstraintsList[0].appendChild(newElem)
+
+            }
+
+            // ask user to confirm if wants to set all time constrains to innactive
+            var ok = confirm('Disable all unnecessary constrains?\nPlease confirm.')
+            if (ok) {
+
+                // Time_Constraints_List
+                // set all Time_Constraints_List to inactive
+                // except - ConstraintBasicCompulsoryTime - ConstraintActivityPreferredStartingTime
+                const xmlTimeElements = xmlDoc.evaluate('//fet/Time_Constraints_List', xmlDoc, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+                for (i = 0; i < xmlTimeElements.snapshotItem(0).children.length; i++) {
+                    if (xmlTimeElements.snapshotItem(0).children[i].localName == 'ConstraintBasicCompulsoryTime') { continue }
+                    if (xmlTimeElements.snapshotItem(0).children[i].localName == 'ConstraintActivityPreferredStartingTime') { continue }
+                    xmlTimeElements.snapshotItem(0).children[i].getElementsByTagName('Active')[0].textContent = 'false'
+                }
+
+                // Space_Constraints_List
+                // set all Space_Constraints_List to inactive
+                // except - ConstraintBasicCompulsorySpace
+                const xmlSpaceElements = xmlDoc.evaluate('//fet/Space_Constraints_List', xmlDoc, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+                for (i = 0; i < xmlSpaceElements.snapshotItem(0).children.length; i++) {
+                    if (xmlSpaceElements.snapshotItem(0).children[i].localName == 'ConstraintBasicCompulsorySpace') { continue }
+                    xmlSpaceElements.snapshotItem(0).children[i].getElementsByTagName('Active')[0].textContent = 'false'
+                }
+            }
+
+            // pretty format modified XML
+            const serializer = new XMLSerializer();
+            XmlDownload = prettyFormatXml(serializer.serializeToString(xmlDoc))
+            XmlDownload = '\ufeff' + XmlDownload + '\n';
+
+            // send it for download
+            const blob = new Blob([XmlDownload], { type: 'application/xml' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+
+            // add _edit_print to filename
+            const ext = xmlName.slice(xmlName.lastIndexOf("."))
+            const name = xmlName.slice(0, xmlName.lastIndexOf(".")) + '_edit_print'
+
+            a.download = name + ext;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // format xml. (it is not elegant but does the job)
+        /* the desired result
+          <ConstraintActivityPreferredStartingTime>
+                  <Weight_Percentage>100</Weight_Percentage>
+                  <Activity_Id>134</Activity_Id>
+                  <Preferred_Day>Πε</Preferred_Day>
+                  <Preferred_Hour>2</Preferred_Hour>
+                  <Permanently_Locked>false</Permanently_Locked>
+                  <Active>true</Active>
+                  <Comments/>
+          </ConstraintActivityPreferredStartingTime>
+        */
+        function prettyFormatXml(xml) {
+            xml = xml.replace(/\n{2,}/g, '\n');
+            xml = xml.replace(/(<ConstraintActivityPreferredStartingTime>)(<)/g, '$1\n       $2')
+            xml = xml.replace(/(<\/Weight_Percentage>)(<)/g, '$1\n       $2')
+            xml = xml.replace(/(<\/Activity_Id>)(<)/g, '$1\n       $2')
+            xml = xml.replace(/(<\/Preferred_Day>)(<)/g, '$1\n       $2')
+            xml = xml.replace(/(<\/Preferred_Hour>)(<)/g, '$1\n       $2')
+            xml = xml.replace(/(<\/Permanently_Locked>)(<)/g, '$1\n       $2')
+            xml = xml.replace(/(<\/Active>)(<)/g, '$1\n       $2')
+            xml = xml.replace(/(<Comments\/>)(<)/g, '$1\n$2')
+            xml = xml.replace(/(<\/ConstraintActivityPreferredStartingTime>)(<)/g, '$1\n$2')
+            return xml
+        }
+
+        function displayXMLContent(xml) {
+            // read data from xml
+            const NumOfDays = xml.getElementsByTagName("Number_of_Days")[0].textContent;
+            const NumOfHours = xml.getElementsByTagName("Number_of_Hours")[0].textContent;
+            const tableColNum = NumOfDays * NumOfHours + 1
+
+            // read days
+            const daysList = xml.getElementsByTagName("Days_List");
+            const days = daysList[0].getElementsByTagName("Day");
+            // make array of [dayName] = index
+            const daysIndexList = {}
+            for (let i = 0; i < days.length; i++) {
+                daysIndexList[days[i].getElementsByTagName("Name")[0].textContent] = i
+            }
+
+            // read hours
+            const hoursList = xml.getElementsByTagName("Hours_List");
+            const hours = hoursList[0].getElementsByTagName("Hour");
+            hoursLength = hours.length
+            // make array of [hourName] = index
+            const hoursIndexList = {}
+            for (let i = 0; i < hoursLength; i++) {
+                hoursIndexList[hours[i].getElementsByTagName("Name")[0].textContent] = i
+            }
+
+            // read teachers
+            const teachersList = xml.getElementsByTagName("Teachers_List");
+            const teachers = teachersList[0].getElementsByTagName("Teacher");
+            // arrays of teacherData - teacherColor
+            const teachersIndexList = {}
+            const teachersColor = {}
+            for (let i = 0; i < teachers.length; i++) {
+                let randomColor = Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+                while (!isLightColor(randomColor)) {
+                    randomColor = Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+                }
+                const teacherName = teachers[i].getElementsByTagName("Name")[0].textContent
+                teachersIndexList[teacherName] = i + 2
+                teachersColor[teacherName] = '#' + randomColor
+            }
+            const tableRowNum = Object.keys(teachersIndexList).length + 2
+
+            // read teachers not available times
+            const teachersNotAvailable = xml.getElementsByTagName("ConstraintTeacherNotAvailableTimes");
+            const teachNotAvailable = [];
+            for (let i = 0; i < teachersNotAvailable.length; i++) {
+                const teacherNA = teachersNotAvailable[i].getElementsByTagName("Teacher")[0].textContent
+                const countNA = teachersNotAvailable[i].getElementsByTagName("Number_of_Not_Available_Times")[0].textContent
+                const timesNA = teachersNotAvailable[i].getElementsByTagName("Not_Available_Time")
+                rowNA = teachersIndexList[teacherNA]
+
+                for (let j = 0; j < timesNA.length; j++) {
+                    d = timesNA[j].getElementsByTagName("Day")[0].textContent
+                    h = timesNA[j].getElementsByTagName("Hour")[0].textContent
+                    colNA = daysIndexList[d] * NumOfHours + hoursIndexList[h] + 1
+                    teachNotAvailable.push({ 'r': rowNA, 'c': colNA })
+                }
+            }
+
+            // read Groups
+            const tmimata = xml.getElementsByTagName("Group");
+            for (let i = 0; i < tmimata.length; i++) {
+                tmimataArray.push(tmimata[i].getElementsByTagName('Name')[0].textContent)
+            }
+
+            // read activities
+            const activities = xml.getElementsByTagName("Activity");
+            const objAct = {}
+
+            for (let i = 0; i < activities.length; i++) {
+                // teachers might be one ot two so i make an array of them
+                const teachers = activities[i].getElementsByTagName("Teacher")
+                let teacherArray = []
+                for (let j = 0; j < teachers.length; j++) {
+                    teacherArray.push(teachers[j].textContent)
+                }
+                let teacherStr = teacherArray.join(' - ')
+
+                const subject = activities[i].getElementsByTagName("Subject")[0].textContent
+                const tmimata = activities[i].getElementsByTagName("Students")
+                // groups might be one or two so so i make an array of them
+                const tmimaArray = []
+                for (let j = 0; j < tmimata.length; j++) {
+                    tmimaArray.push(tmimata[j].textContent)
+                }
+                const tmima = tmimaArray.join(' ')
+
+                const duration = activities[i].getElementsByTagName("Duration")[0].textContent
+                const totalDuration = activities[i].getElementsByTagName("Total_Duration")[0].textContent
+                const id = activities[i].getElementsByTagName("Id")[0].textContent
+
+                objAct[id] = {
+                    'duration': duration,
+                    'totalDuration': totalDuration,
+                    'tmimata': tmimaArray,
+                    'tmima': tmima,
+                    'teacher': teacherArray,
+                    'teacherStr': teacherStr,
+                    'subject': subject
+                }
+
+                if (!teachers.length) noTeacher = true
+            }
+
+
+            if (noTeacher) {
+                teachersIndexList['notAv'] = Object.keys(teachersIndexList).length + 2
+            }
+
+            // read activities start times
+            const activitiesStartTimes = xml.getElementsByTagName("ConstraintActivityPreferredStartingTime");
+            const objActivitiesStartTimes = []
+
+            for (let i = 0; i < activitiesStartTimes.length; i++) {
+                const id = activitiesStartTimes[i].getElementsByTagName("Activity_Id")[0].textContent
+                const d = activitiesStartTimes[i].getElementsByTagName("Preferred_Day")[0].textContent
+                const h = activitiesStartTimes[i].getElementsByTagName("Preferred_Hour")[0].textContent
+                const teacherArr = objAct[id].teacher
+                // if teacher present
+                if (teacherArr.length) {
+                    // set row, col, data for every teacher 
+                    for (j = 0; j < teacherArr.length; j++) {
+                        const rowSet = teachersIndexList[teacherArr[j]]
+                        const colSet = daysIndexList[d] * NumOfHours + hoursIndexList[h] + 1
+                        objActivitiesStartTimes.push({
+                            'id': id,
+                            'r': rowSet,
+                            'c': colSet,
+                            'data': objAct[id],
+                            'color': teachersColor[teacherArr[j]]
+                        })
+                    }
+
+                } else {
+                    // no teacher
+                    const rowSet = teachersIndexList['notAv']
+                    const colSet = daysIndexList[d] * NumOfHours + hoursIndexList[h] + 1
+                    objActivitiesStartTimes.push({
+                        'id': id,
+                        'r': rowSet,
+                        'c': colSet,
+                        'data': objAct[id] //? objAct[id] : {}
+                    })
+
+                }
+            }
+
+            // -------- create table ------------
+            const table = document.getElementById("programTable");
+            const thead = table.tHead
+            const tbody = table.tBodies[0]
+            const tfoot = table.tFoot
+
+            let row = tfoot.insertRow()
+            for (i = 0; i < tableColNum; i++) {
+                let cell = row.insertCell()
+                cell.classList.add('footer')
+                cell.classList.add('no-print')
+            }
+
+
+            // 1st row ------
+            row = thead.insertRow();
+            // title of table
+            cell = row.insertCell()
+            cell.rowSpan = 2
+            cell.textContent = "FET - edit + print";
+            cell.style.borderRightWidth = borderWidth
+            cell.style.background = '#f5fbff'
+            cell.style.textAlign = 'center'
+            cell.style.fontSize = '20px'
+            cell.style.color = '#11496e'
+            // date names
+            for (let i = 0; i < days.length; i++) {
+                const dayShort = days[i].getElementsByTagName("Name")[0].textContent;
+                const dayLong = days[i].getElementsByTagName("Long_Name")[0].textContent;
+                const dateName = dayLong ? dayLong : dayShort;
+                let cell = row.insertCell()
+                cell.colSpan = NumOfHours
+                cell.textContent = dateName
+                cell.classList.add('text-center', 'day')
+                cell.style.borderRightWidth = borderWidth
+                cell.style.cursor = 'pointer'
+                cell.title = 'Do not print'
+                cell.setAttribute('index', i + 1)
+            }
+
+            // 2nd row -----
+            row = thead.insertRow();
+
+            // hour names
+            for (let i = 0; i < days.length; i++) {
+                for (let j = 0; j < hours.length; j++) {
+                    const hourShort = hours[j].getElementsByTagName("Name")[0].textContent;
+                    const hourLong = hours[j].getElementsByTagName("Long_Name")[0].textContent;
+                    const glue = hourShort && hourLong ? '\n ' : '';
+                    const hourName = hourShort + glue + hourLong
+                    cell = row.insertCell()
+                    cell.textContent = hours[j].getElementsByTagName("Name")[0].textContent
+                    cell.title = hourName
+                    cell.classList.add('text-center', 'hour')
+
+                    if (j == hours.length - 1) {
+                        cell.style.borderRightWidth = borderWidth
+                    }
+                }
+            }
+
+            // 3rd row and after -----
+            // enter schedule data
+
+            // 1st column - teacher names
+            for (let i = 0; i < Object.keys(teachersIndexList).length; i++) {
+                let row = tbody.insertRow();
+                cell = row.insertCell()
+                cell.textContent = Object.keys(teachersIndexList)[i] == 'notAv' ? '' : Object.keys(teachersIndexList)[i]
+                cell.classList.add('text-small')
+                cell.style.borderRightWidth = borderWidth
+                // cells of schedule
+                for (let j = 0; j < days.length; j++) {
+                    for (let k = 0; k < hours.length; k++) {
+                        cell = row.insertCell()
+                        cell.classList.add('program')
+                        if (k == hours.length - 1) {
+                            cell.style.borderRightWidth = borderWidth
+                        }
+                        // set to every cell values of day and hour to be accesible later
+                        cell.setAttribute('day', days[j].getElementsByTagName("Name")[0].textContent)
+                        cell.setAttribute('hour', hours[k].getElementsByTagName("Name")[0].textContent)
+                    }
+                }
+                // warehouse
+                cell = row.insertCell()
+                cell.classList.add('apothiki')
+                cell.classList.add('no-print')
+                apothikiColumnIndex = cell.cellIndex
+
+            }
+
+            // mark not available hours of teacher
+            for (let i = 0; i < teachNotAvailable.length; i++) {
+                cell = table.rows[teachNotAvailable[i].r].cells[teachNotAvailable[i].c]
+                cell.classList.add("not-av")
+
+            }
+
+            // insert activities
+            for (let i = 0; i < objActivitiesStartTimes.length; i++) {
+                // get cell
+                row = table.rows[objActivitiesStartTimes[i].r]
+                cell = row.cells[objActivitiesStartTimes[i].c]
+
+                // delete from activities if is set objActivitiesStartTimes
+                delete objAct[objActivitiesStartTimes[i].id]
+
+                // create the cards (spans)
+                var tmimaSpan = document.createElement("span");
+                tmimaSpan.setAttribute("class", "drag-span display-inline-block");
+                tmimaSpan.id = objActivitiesStartTimes[i].id;
+                tmimaSpan.setAttribute("tmima", objActivitiesStartTimes[i].data.tmimata);
+                tmimaSpan.setAttribute("row", row.rowIndex);
+                tmimaSpan.setAttribute("col", cell.cellIndex);
+                tmimaSpan.textContent = objActivitiesStartTimes[i].data.tmima;
+                tmimaSpan.setAttribute('info', objActivitiesStartTimes[i].data.tmima + " - " + objActivitiesStartTimes[i].data.duration + '/' + objActivitiesStartTimes[i].data.totalDuration + "\n" + objActivitiesStartTimes[i].data.subject + "\n" + objActivitiesStartTimes[i].data.teacherStr)
+                tmimaSpan.draggable = true;
+                if (showColors) tmimaSpan.style.background = objActivitiesStartTimes[i].color
+                // add card to cell
+                cell.appendChild(tmimaSpan)
+                // set data to cell
+                cell.id = objActivitiesStartTimes[i].id
+                cell.setAttribute('tmima', objActivitiesStartTimes[i].data.tmimata)
+
+                // make cards wide to simulate duration
+                // all cards have duration 1
+                tmimaSpan.setAttribute("w", 1);
+                // if duration > 1 set width
+                clspn = objActivitiesStartTimes[i].data.duration
+                if (clspn > 1) {
+                    tmimaSpan.classList.add("w-" + clspn)
+                    tmimaSpan.setAttribute("w", clspn);
+                    index = cell.cellIndex
+                    for (j = 0; j < clspn; j++) {
+                        // set group to all cells that occupies the card
+                        row.cells[index + j].id = objActivitiesStartTimes[i].id
+                        // set start - stop indexes for loop through cells
+                        // a triple wide card occupies three cells
+                        // cell 1  => start = 0,  stop = 2
+                        // cell 2  => start = -1, stop = 1
+                        // cell 3 => start = -2,  stop = 0
+                        // that way i know in witch cell the card belongs
+                        row.cells[index + j].setAttribute('tmima', objActivitiesStartTimes[i].data.tmimata)
+                        row.cells[index + j].setAttribute('start', 0 - j)
+                        row.cells[index + j].setAttribute('stop', clspn - 1 - j)
+                    }
+
+                }
+            }
+
+            for (let index of Object.keys(objAct)) {
+                for (i = 0; i < objAct[index].teacher.length; i++) {
+                    // create the cards (spans)
+                    var tmimaSpan = document.createElement("span");
+                    tmimaSpan.setAttribute("class", "drag-span display-inline-block");
+                    tmimaSpan.id = index;
+                    tmimaSpan.setAttribute("tmima", objAct[index].tmimata);
+                    tmimaSpan.setAttribute("row", teachersIndexList[objAct[index].teacher[i]]);
+                    tmimaSpan.setAttribute("col", apothikiColumnIndex);
+                    tmimaSpan.textContent = objAct[index].tmima;
+                    tmimaSpan.setAttribute('info', objAct[index].tmima + " - " + objAct[index].duration + '/' + objAct[index].totalDuration + "\n" + objAct[index].subject + "\n" + objAct[index].teacherStr)
+                    tmimaSpan.draggable = true;
+                    if (showColors) tmimaSpan.style.background = teachersColor[objAct[index].teacher[i]]
+
+                    tmimaSpan.setAttribute("w", 1);
+                    // if duration > 1 set width
+                    clspn = objAct[index].duration
+                    if (clspn > 1) {
+                        tmimaSpan.classList.add("w-" + clspn)
+                        tmimaSpan.setAttribute("w", clspn);
+                    }
+                    // add card to cell
+                    table.rows[tmimaSpan.getAttribute('row')].cells[apothikiColumnIndex].appendChild(tmimaSpan)
+
+                }
+
+            }
+
+            eventListeners()
+            saveTable(table)
+        }
+
+        // add eventListeners
+        // should appended every time reconstruct table from history
+        function eventListeners() {
+            const table = document.getElementById('programTable')
+            table.addEventListener('dragover', handleDragOver);
+            table.addEventListener('drop', handleDrop);
+
+            const spans = Array.from(document.querySelectorAll(`span`))
+            spans.forEach(sp => {
+                sp.addEventListener('dragstart', handleDragStart);
+                sp.addEventListener('dragend', handleDragEnd);
+                sp.ondblclick = () => handleDoubleClick(sp.id)
+                sp.onmouseover = function () {
+                    document.getElementById('whiteboard').innerText = this.getAttribute('info') ? this.getAttribute('info').replace(', ', '\n') : '';
+                    document.getElementById('whiteboard').classList.remove('display-none');
+                };
+                sp.onmouseout = function () {
+                    document.getElementById('whiteboard').innerText = '';
+                    document.getElementById('whiteboard').classList.add('display-none');
+                };
+            })
+
+            const dayRowCells = Array.from(document.querySelectorAll(`.day`))
+            dayRowCells.forEach(d => {
+                d.addEventListener('click', () => dayNotPrint(d.getAttribute('index')))
+
+            })
+
+            const hourColCells = Array.from(document.querySelectorAll(`.hour`))
+            hourColCells.forEach(c => {
+                c.onmouseover = function () {
+                    document.getElementById('whiteboard').innerText = this.getAttribute('info') ? this.getAttribute('info').replace(', ', '\n') : '';
+                    document.getElementById('whiteboard').classList.remove('display-none');
+                };
+                c.onmouseout = function () {
+                    document.getElementById('whiteboard').innerText = '';
+                    document.getElementById('whiteboard').classList.add('display-none');
+                };
+
+            })
+
+            // clear backgrounds might be present ( and saved) when table was saved
+            const spotLastCell = Array.from(document.querySelectorAll('.spot-last-cell'))
+            spotLastCell.forEach(c => c.classList.remove('spot-last-cell'))
+
+            const spotExpelled = Array.from(document.querySelectorAll('.spot-expelled'))
+            spotExpelled.forEach(c => c.classList.remove('spot-expelled'))
+
+            const highlighted = Array.from(document.querySelectorAll('.highlight'))
+            highlighted.forEach(c => c.classList.remove('highlight'))
+        }
+
+
+        // saves table to sessionStorage
+        function saveTable(table) {
+
+            // set variables to session to track indexes
+            const keepTables = sessionStorage.getItem("keep-tables")
+            let first = sessionStorage.getItem("first-table-index")
+            const last = sessionStorage.getItem("last-table-index")
+            const current = sessionStorage.getItem("current-table-index")
+
+            // if isset keepTables and the number of entries > keepTables remove items from beggining of stack
+            if (keepTables) {
+                if (last - first > keepTables) {
+                    sessionStorage.removeItem('table#' + first)
+                    first++
+                    sessionStorage.setItem('first-table-index', first)
+                }
+            } else {
+                sessionStorage.setItem('first-table-index', 0)
+            }
+
+            // calculate newIndex
+            let newIndex = 0
+            if (current) {
+                newIndex = +current + +1
+            }
+
+            // save table
+            // if memory is full it will throw error
+            try {
+                const tableJson = serializeDOM(table)
+                sessionStorage.setItem('table#' + newIndex, JSON.stringify(tableJson))
+                // set index after table saved
+                // if memory full program throws exception in previous line so the indexes won't change
+                sessionStorage.setItem('current-table-index', newIndex)
+                sessionStorage.setItem('last-table-index', newIndex)
+            } catch {
+                // memory full
+                // set keepTables to safe num newIndex - 2
+                sessionStorage.setItem('keep-tables', newIndex - 2)
+            }
+
+            // if we are back in history and make new moves of cards
+            // we delete all history after last current history
+            if (newIndex !== last) {
+                for (i = last; i > newIndex; i--) {
+                    sessionStorage.removeItem('table#' + i)
+                }
+            }
+        }
+
+
+        //  Determine if a color is a light color
+        //  @see https://gist.github.com/krabs-github/ec56e4f1c12cddf86ae9c551aa9d9e04
+        function isLightColor(color) {
+            let r, g, b;
+
+            // Check the format of the color, HEX or RGB?
+            if (color.match(/^rgb/)) {
+                // If HEX --> store the red, green, blue values in separate variables
+                const rgb = color.match(
+                    /^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*(\d+(?:\.\d+)?))?\)$/
+                );
+
+                r = rgb[1];
+                g = rgb[2];
+                b = rgb[3];
+            } else {
+                // If RGB --> Convert it to HEX: http://gist.github.com/983661
+                const hexColor = +(
+                    '0x' + color.slice(1).replace(color.length < 5 && /./g, '$&$&')
+                );
+
+                r = hexColor >> 16;
+                g = (hexColor >> 8) & 255;
+                b = hexColor & 255;
+            }
+
+            // HSP equation from http://alienryderflex.com/hsp.html
+            const hsp = Math.sqrt(0.299 * (r * r) + 0.587 * (g * g) + 0.114 * (b * b));
+
+            // Using the HSP value, determine whether the color is light or dark
+            // > 127.5 is 'light', <= 127.5 is 'dark'
+
+            //return hsp > 127.5;
+            return hsp > 150;
+        }
+
+
+        function handleDragStart(e) {
+            draggedElement = e.target;
+            draggedElement.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            // set background green at allowed for drop row
+            setBackgroundGreen(draggedElement)
+            // change drag status of cards so i can target in background cells
+            const spans = Array.from(document.querySelectorAll(`span`))
+            spans.forEach(el => {
+                if (el.id !== draggedElement.id) el.classList.add('no-drag')
+            })
+        }
+
+        function handleDragEnd(e) {
+            draggedElement.classList.remove('dragging');
+            // set card drag status to default
+            const spans = Array.from(document.querySelectorAll(`span`))
+            spans.forEach(el => el.classList.remove('no-drag'))
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            // highlight closer cell for drop
+            const cell = e.target.closest('td');
+            cell.classList.add('highlight');
+            setTimeout(() => cell.classList.remove('highlight'), 200);
+        }
+
+        // clean things after drop
+        function clearElement(el) {
+            el.classList.remove('dragging');
+            el = null;
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+
+            const cell = e.target.closest('td');
+            if (!(cell && draggedElement)) { return }
+
+            const table = cell.parentElement.parentElement.parentElement
+
+            const columnIndex = cell.cellIndex
+            const tbody = cell.parentElement.parentElement
+            const rowsLegth = tbody.rows.length
+
+            const dragElId = draggedElement.id
+            const dragElTmima = draggedElement.getAttribute('tmima').split(',')
+            const dragElRow = draggedElement.getAttribute('row')
+            const dragElCol = draggedElement.getAttribute('col')
+            const dragElSize = draggedElement.getAttribute('w')
+
+            // set card drag status to default
+            const spans = Array.from(document.querySelectorAll(`span`))
+            spans.forEach(el => el.classList.remove('no-drag'))
+            // all cells occupied of card have the same id
+            // only the first holds the card id + start(=0) 
+            const cellId = +cell.id + +cell.getAttribute('start')
+
+            // if drop is in the old cell that drag started i do nothing
+            if (dragElId == cellId) {
+                removeBackground(draggedElement)
+                clearElement(draggedElement)
+                return
+            }
+
+            // if card size is 2 or 3 i prevent droping in last hours
+            let lastHoursAllowance = columnIndex % hoursLength
+            if (lastHoursAllowance == 0) {
+                lastHoursAllowance = 1
+            } else {
+                lastHoursAllowance = hoursLength - lastHoursAllowance + 1
+            }
+            if (dragElSize > lastHoursAllowance) {
+                removeBackground(draggedElement)
+                clearElement(draggedElement)
+                return
+            }
+
+
+            // 1st round
+            // creating message for user checking what should do at 2nd round
+
+            let message = []
+
+            // get all cards with the same id as an array and loop
+            const newDraggedElenents1 = Array.from(document.querySelectorAll(`span[id="${draggedElement.id}"]`))
+            newDraggedElenents1.forEach(el => {
+                let elRow = el.getAttribute('row')
+                const newCell = table.rows[elRow].cells[columnIndex]
+                // if drop cell has id, that means that a card is placed in it
+                if (newCell.id) {
+                    const existingElements = Array.from(document.querySelectorAll(`span[id="${newCell.id}"]`))
+                    existingElements.forEach(el => {
+                        const apo = +el.parentElement.getAttribute('hour') + +el.parentElement.getAttribute('start')
+                        const eos = +el.parentElement.getAttribute('hour') + +el.parentElement.getAttribute('stop')
+                        const oraStr = apo == eos ? apo + ' hour' : apo + '-' + eos + ' hours';
+                        message.push('\n' + el.parentElement.parentElement.cells[0].textContent + '      ' + oraStr + '      ' + el.getAttribute('tmima').replace(",", " "))
+                    })
+                }
+
+                // if card size is 2 or 3 i check also the next cells if they have cards
+                for (i = 0; i < dragElSize; i++) {
+                    if (columnIndex == apothikiColumnIndex) { break }
+                    const newCell = table.rows[elRow].cells[+columnIndex + +i]
+                    // if next cell has id, that means that a card is placed in it
+                    if (newCell.id) {
+                        const existingElements = Array.from(document.querySelectorAll(`span[id="${newCell.id}"]`))
+                        existingElements.forEach(el => {
+                            const apo = +el.parentElement.getAttribute('hour') + +el.parentElement.getAttribute('start')
+                            const eos = +el.parentElement.getAttribute('hour') + +el.parentElement.getAttribute('stop')
+                            const oraStr = apo == eos ? apo + ' hour' : apo + '-' + eos + ' hours';
+                            message.push('\n' + el.parentElement.parentElement.cells[0].textContent + '      ' + oraStr + '      ' + el.getAttribute('tmima').replace(",", " "))
+                        })
+                    }
+                }
+
+            })
+
+            // check all the others cell in afected columns if they have the same students-division
+            dragElTmima.forEach(tm => {
+                const otherCells = Array.from(document.querySelectorAll(`td[tmima*="${tm}"]`))
+                    .filter(el => el.cellIndex >= columnIndex && el.cellIndex < +columnIndex + +dragElSize && el.id !== draggedElement.id)
+
+                otherCells.forEach(c => {
+                    if (!c.id) { return }
+                    const cellsClear = Array.from(document.querySelectorAll(`td[id="${c.id}"]`))
+
+                    cellsClear.forEach(el => {
+                        // if they contain card the card should be removed
+                        if (el.firstChild) {
+                            const apo = +el.getAttribute('hour') + +el.getAttribute('start')
+                            const eos = +el.getAttribute('hour') + +el.getAttribute('stop')
+                            const oraStr = apo == eos ? apo + ' hour' : apo + '-' + eos + ' hours';
+                            message.push('\n' + el.parentElement.cells[0].textContent + '      ' + oraStr + '      ' + el.getAttribute('tmima').replace(",", " "))
+                        }
+                    })
+
+                })
+
+            })
+            // end of 1st round
+
+            // ask user to confirm
+            message = Array.from(new Set(message))
+            if (message.length) {
+                var ok = confirm('Conflicts:\n' + message + '\n\nPlease confirm.')
+                if (!ok) {
+                    removeBackground(draggedElement)
+                    return
+                }
+            }
+
+            // 2nd round
+            // time for actions
+
+            // clean all old cells of the dragged card 
+            const cellsClear = Array.from(document.querySelectorAll(`td[id="${dragElId}"]`))
+            cellsClear.forEach(el => {
+                el.removeAttribute('id')
+                el.removeAttribute('tmima')
+                el.removeAttribute('start')
+                el.removeAttribute('stop')
+                el.classList.add('spot-last-cell');
+                setTimeout(() => el.classList.remove('spot-last-cell'), spotExpellDuration);
+            })
+
+            // get all cards with the same id as an array and loop
+            const newDraggedElenents = Array.from(document.querySelectorAll(`span[id="${draggedElement.id}"]`))
+            newDraggedElenents.forEach(spel => {
+                let elRow = spel.getAttribute('row')
+                const newCell = table.rows[elRow].cells[columnIndex]
+                spel.setAttribute('col', columnIndex)
+                // if drop cell has id, that means that a card is placed in it and should be moved to warehouse
+                if (newCell.id) {
+                    const existingElements = Array.from(document.querySelectorAll(`span[id="${newCell.id}"]`))
+                    existingElements.forEach(exel => {
+                        exel.setAttribute('col', apothikiColumnIndex)
+                        table.rows[exel.getAttribute('row')].cells[apothikiColumnIndex].appendChild(exel)
+                    })
+                    // clear all cells that had the card from the data
+                    const existingElementsCells = Array.from(document.querySelectorAll(`td[id="${newCell.id}"]`))
+                    existingElementsCells.forEach(exelcell => {
+                        exelcell.removeAttribute('id')
+                        exelcell.removeAttribute('tmima')
+                        exelcell.removeAttribute('start')
+                        exelcell.removeAttribute('stop')
+                        exelcell.classList.add('spot-expelled');
+                        setTimeout(() => exelcell.classList.remove('spot-expelled'), spotExpellDuration);
+                    })
+                }
+                // append the card to drop cell
+                newCell.appendChild(spel)
+
+                let chkNotAvailableCells = false
+
+                // set data to cells depending in card size
+                for (i = 0; i < dragElSize; i++) {
+                    // if drop is in warehouse no need to do anything of these
+                    if (columnIndex == apothikiColumnIndex) { break }
+
+                    // get cell
+                    const newCell = table.rows[elRow].cells[+columnIndex + +i]
+
+                    // if not availiable i will mark card later
+                    if (newCell.classList.contains('not-av')) { chkNotAvailableCells = true }
+
+                    // if cell contains other card i send it to warehouse
+                    if (newCell.id) {
+                        const existingElements = Array.from(document.querySelectorAll(`span[id="${newCell.id}"]`))
+                        existingElements.forEach(el => {
+                            el.setAttribute('col', apothikiColumnIndex)
+                            table.rows[el.getAttribute('row')].cells[apothikiColumnIndex].appendChild(el)
+                        })
+                        // remove data attributes from cells that conatained previous card 
+                        const existingElementsCells = Array.from(document.querySelectorAll(`td[id="${newCell.id}"]`))
+                        existingElementsCells.forEach(exelcell => {
+                            exelcell.removeAttribute('id')
+                            exelcell.removeAttribute('tmima')
+                            exelcell.removeAttribute('start')
+                            exelcell.removeAttribute('stop')
+                            exelcell.classList.add('spot-expelled');
+                            setTimeout(() => exelcell.classList.remove('spot-expelled'), spotExpellDuration);
+                        })
+                    }
+                    // set data attributes to new cells
+                    newCell.setAttribute('id', draggedElement.id)
+                    newCell.setAttribute('tmima', dragElTmima)
+                    newCell.setAttribute('start', 0 - i)
+                    newCell.setAttribute('stop', dragElSize - 1 - i)
+
+                }
+
+                // mark card if droped in not available teacher time cell
+                if (chkNotAvailableCells) {
+                    spel.classList.add('warn-span')
+                } else {
+                    spel.classList.remove('warn-span')
+                }
+            })
+
+
+            // find all other cells with the same group in columns affected
+            dragElTmima.forEach(tm => {
+                const otherCells = Array.from(document.querySelectorAll(`td[tmima*="${tm}"]`))
+                    .filter(el => el.cellIndex >= columnIndex && el.cellIndex < +columnIndex + +dragElSize && el.id !== draggedElement.id)
+
+                otherCells.forEach(c => {
+                    // have no id -> do nothing
+                    if (!c.id) { return }
+
+                    // get all cells with id that belong to previous card
+                    const cellsClear = Array.from(document.querySelectorAll(`td[id="${c.id}"]`))
+
+                    cellsClear.forEach(el => {
+                        // if card is present i send it in warehouse
+                        if (el.firstChild) {
+                            el.firstChild.setAttribute('col', apothikiColumnIndex)
+                            table.rows[el.firstChild.getAttribute('row')].cells[apothikiColumnIndex].appendChild(el.firstChild)
+                        }
+                        // clean data attributes
+                        el.removeAttribute('id')
+                        el.removeAttribute('tmima')
+                        el.removeAttribute('start')
+                        el.removeAttribute('stop')
+                        el.classList.add('spot-expelled');
+                        setTimeout(() => el.classList.remove('spot-expelled'), spotExpellDuration);
+                    })
+
+                })
+
+            })
+
+            removeBackground(draggedElement)
+            clearElement(draggedElement)
+            // end od 2nd round
+
+            findMissingTmimata()
+            saveTable(table)
+        }
+
+        function findMissingTmimata() {
+            const table = document.getElementById('programTable')
+
+            // find missing groups for every column
+            for (i = 1; i < table.tBodies[0].rows[0].cells.length - 1; i++) {
+                // start with full group array for every column
+                let colTmimataArray = tmimataArray
+                // at every row
+                for (j = 0; j < table.tBodies[0].rows.length; j++) {
+                    // get group
+                    let toRemove = table.tBodies[0].rows[j].cells[i].getAttribute('tmima')
+                    // if group present i remove it from array
+                    if (toRemove) {
+                        toRemove = toRemove.split(',')
+                        colTmimataArray = colTmimataArray.filter((el) => !toRemove.includes(el));
+                    }
+
+                }
+
+                //if (colTmimataArray == tmimataArray) colTmimataArray = []
+
+                // if groups left in array set thead and tfoot to inform user
+                if (colTmimataArray.length) {
+                    table.tHead.rows[1].cells[i - 1].style.background = '#eeeeee'
+                    table.tHead.rows[1].cells[i - 1].setAttribute('info', colTmimataArray)
+                    table.tFoot.rows[0].cells[i].textContent = colTmimataArray
+                } else {
+                    table.tHead.rows[1].cells[i - 1].style.background = ''
+                    table.tHead.rows[1].cells[i - 1].setAttribute('info', '')
+                    table.tFoot.rows[0].cells[i].textContent = ''
+                }
+            }
+
+        }
+
+        // swaps print-noprint for speciphic day
+        function dayNotPrint(day) {
+            const table = document.getElementById('programTable')
+
+            if (table.tHead.rows[0].cells[day].classList.contains('strike')) {
+
+                table.tHead.rows[0].cells[day].classList.remove('no-print')
+                table.tHead.rows[0].cells[day].classList.remove('strike')
+                table.tHead.rows[0].cells[day].title = 'Do not print'
+                for (i = 0; i < hoursLength; i++) {
+                    table.tHead.rows[1].cells[(day - 1) * hoursLength + i].classList.remove('no-print')
+                    for (j = 0; j < table.tBodies[0].children.length; j++) {
+                        table.tBodies[0].rows[j].cells[(day - 1) * hoursLength + i + 1].classList.remove('no-print')
+                    }
+                }
+
+            } else {
+
+                table.tHead.rows[0].cells[day].classList.add('no-print')
+                table.tHead.rows[0].cells[day].classList.add('strike')
+                table.tHead.rows[0].cells[day].title = 'Do print'
+                for (i = 0; i < hoursLength; i++) {
+                    table.tHead.rows[1].cells[(day - 1) * hoursLength + i].classList.add('no-print')
+                    for (j = 0; j < table.tBodies[0].children.length; j++) {
+                        table.tBodies[0].rows[j].cells[(day - 1) * hoursLength + i + 1].classList.add('no-print')
+                    }
+                }
+            }
+
+        }
+
+        // sends card to warehouse
+        function handleDoubleClick(id) {
+            const table = document.getElementById("programTable");
+            const existingElements = Array.from(document.querySelectorAll(`span[id="${id}"]`))
+            existingElements.forEach(el => {
+                el.setAttribute('col', apothikiColumnIndex)
+                table.rows[el.getAttribute('row')].cells[apothikiColumnIndex].appendChild(el)
+            })
+            const existingElementsCells = Array.from(document.querySelectorAll(`td[id="${id}"]`))
+            existingElementsCells.forEach(el => {
+                el.removeAttribute('id')
+                el.removeAttribute('tmima')
+                el.removeAttribute('start')
+                el.removeAttribute('stop')
+                el.classList.add('spot-expelled');
+                setTimeout(() => el.classList.remove('spot-expelled'), spotExpellDuration);
+            })
+
+            findMissingTmimata()
+            saveTable(table)
+        }
+
+
+        // source: https://blog.stackademic.com/understanding-dom-serialization-and-parsing-in-javascript-28e8ec1acab3
+        const serializeDOM = (root) => {
+            if (!(root instanceof Element)) return null; // Ensure the element is a valid DOM element
+            const domList = {
+                childNodes: [],
+                type: "element",
+                tagName: root.tagName, // Get the tag name (e.g., div, p, h1)
+            };
+            // Loop through all the attributes of the element and add them to the serialized object
+            for (const attr of root.attributes) {
+                domList[attr.name] = `${attr.value}`;
+            }
+            // Recursively serialize child elements
+            root.childNodes.forEach((node) => {
+                if (node.nodeType === 1) {
+                    domList.childNodes.push(serializeDOM(node)); // Serialize child elements
+                } else if (node.nodeType === 3 && node.nodeValue.trim() !== "") {
+                    // Serialize text nodes, but ignore empty text nodes
+                    domList.childNodes.push({
+                        type: "text",
+                        content: node.nodeValue, // Store the content of the text node
+                    });
+                }
+            });
+            return domList; // Return the serialized DOM
+        };
+
+        // source: https://blog.stackademic.com/understanding-dom-serialization-and-parsing-in-javascript-28e8ec1acab3
+        const parseDOM = (element) => {
+            const { type } = element;
+            if (type === "text") {
+                // If it's a text node, create a text node
+                const rootEle = document.createTextNode(element.content);
+                return rootEle;
+            }
+            const { tagName, childNodes, ...props } = element;
+            const rootEle = document.createElement(tagName.toLowerCase()); // Create the element based on the tag name
+            // Set attributes of the element
+            for (let prop of Object.keys(props)) {
+                if (prop.startsWith("on")) {
+                    // Handle inline event listeners
+                    rootEle[prop] = new Function(props[prop]);
+                } else {
+                    rootEle.setAttribute(prop, props[prop]);
+                }
+            }
+            // Recursively append child nodes
+            childNodes.forEach((node) => {
+                rootEle.appendChild(parseDOM(node)); // Recursively parse child elements
+            });
+            return rootEle; // Return the recreated DOM element
+        };
+
+        function prev() {
+            let current = sessionStorage.getItem("current-table-index")
+            const first = sessionStorage.getItem("first-table-index")
+            if (current == first) { return }
+            current--
+            sessionStorage.setItem("current-table-index", current)
+            const tableJson = sessionStorage.getItem('table#' + current)
+            const newTable = parseDOM(JSON.parse(tableJson))
+            const oldTable = document.getElementById('programTable')
+            document.getElementById('tablediv').replaceChild(newTable, oldTable)
+
+            eventListeners()
+        }
+
+        function next() {
+            let current = sessionStorage.getItem("current-table-index")
+            const last = sessionStorage.getItem("last-table-index")
+            if (current == last) { return }
+            current++
+            sessionStorage.setItem("current-table-index", current)
+            const tableJson = sessionStorage.getItem('table#' + current)
+            const newTable = parseDOM(JSON.parse(tableJson))
+            const oldTable = document.getElementById('programTable')
+            document.getElementById('tablediv').replaceChild(newTable, oldTable)
+
+            eventListeners()
+        }
+
+        // Get the modal
+        const aboutModal = document.getElementById("aboutModal");
+        // Get the button that opens the modal
+        const btn = document.getElementById("aboutBtn");
+        // Get the <span> element that closes the modal
+        const span = document.getElementsByClassName("close")[0];
+
+        // When the user clicks the button, open the modal 
+        btn.onclick = function () {
+            aboutModal.style.display = "block";
+        }
+
+        function closeAbout() {
+            aboutModal.style.display = 'none';
+            //window.location.reload()
+        }
+
+        // When the user clicks on <span> (x), close the modal
+        span.onclick = function () {
+            closeAbout()
+        }
+
+        // Get the error modal
+        const errorModal = document.getElementById('errorModal');
+
+        function showError(title, message) {
+            document.getElementById('errorTitle').textContent = title;
+            document.getElementById('errorMessage').textContent = message;
+            errorModal.style.display = 'block';
+        }
+
+        function closeError() {
+            //errorModal.style.display = 'none';
+            window.location.reload()
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function (event) {
+            if (event.target === aboutModal) {
+                closeAbout();
+            }
+            if (event.target === errorModal) {
+                closeError();
+            }
+        }
+
+        // Close with ESC key
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && aboutModal.style.display === 'block') {
+                closeAbout();
+            }
+            if (event.key === 'Escape' && errorModal.style.display === 'block') {
+                closeError();
+            }
+        });
+
+        // clear session 
+        window.onbeforeunload = () => sessionStorage.clear()
+
+    </script>
+
+</body>
+
+</html>
