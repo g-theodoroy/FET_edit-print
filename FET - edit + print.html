@@ -384,7 +384,7 @@ It is provided as is under "MIT License"
         <div id="down" onclick="downloadXml()" class="undo-redo-button display-none no-print" title="Download fet file">
             &dArr;</div>
         <div id="toggleFooter" onclick="toggleFooterVisible()" class="undo-redo-button display-none no-print"
-            title="toggle footer visible">&#9863;</div>
+            title="toggle footer visible">&oplus;</div>
         <div id="prev" onclick="prev()" class="undo-redo-button display-none no-print" title="Undo">&larr;</div>
         <div id="next" onclick="next()" class="undo-redo-button display-none no-print" title="Redo">&rarr;</div>
     </div>
@@ -544,10 +544,6 @@ It is provided as is under "MIT License"
             document.getElementById('xmlFileInput').value = '';
             document.getElementById('container').style.display = 'none';
             document.getElementById('title').textContent = file.name;
-            document.getElementById('prev').classList.remove('display-none')
-            document.getElementById('prev').classList.add('display-inline-block')
-            document.getElementById('next').classList.remove('display-none')
-            document.getElementById('next').classList.add('display-inline-block')
             document.getElementById('down').classList.remove('display-none')
             document.getElementById('down').classList.add('display-inline-block')
             document.getElementById('toggleFooter').classList.remove('display-none')
@@ -1176,8 +1172,8 @@ It is provided as is under "MIT License"
                     sessionStorage.removeItem('table#' + i)
                 }
             }
+            showHidePrevNext()
         }
-
 
         //  Determine if a color is a light color
         //  @see https://gist.github.com/krabs-github/ec56e4f1c12cddf86ae9c551aa9d9e04
@@ -1656,6 +1652,7 @@ It is provided as is under "MIT License"
             document.getElementById('tablediv').replaceChild(newTable, oldTable)
 
             eventListeners()
+            showHidePrevNext()
         }
 
         function next() {
@@ -1670,6 +1667,29 @@ It is provided as is under "MIT License"
             document.getElementById('tablediv').replaceChild(newTable, oldTable)
 
             eventListeners()
+            showHidePrevNext()
+        }
+
+        function showHidePrevNext() {
+            const first = sessionStorage.getItem("first-table-index")
+            const last = sessionStorage.getItem("last-table-index")
+            const current = sessionStorage.getItem("current-table-index")
+            if (current) {
+                document.getElementById('next').classList.remove('display-none')
+                document.getElementById('next').classList.add('display-inline-block')
+                document.getElementById('prev').classList.remove('display-none')
+                document.getElementById('prev').classList.add('display-inline-block')
+            }
+
+            if (current == last) {
+                document.getElementById('next').classList.add('display-none')
+                document.getElementById('next').classList.remove('display-inline-block')
+            }
+            if (current == first) {
+                document.getElementById('prev').classList.add('display-none')
+                document.getElementById('prev').classList.remove('display-inline-block')
+            }
+
         }
 
         // Get the modal
@@ -1736,9 +1756,11 @@ It is provided as is under "MIT License"
                 if (showFooter) {
                     c.classList.remove('display-none')
                     toggleFooter.title = "toggle footer invisible"
+                    toggleFooter.innerHTML = "&otimes;"
                 } else {
                     c.classList.add('display-none')
                     toggleFooter.title = "toggle footer visible"
+                    toggleFooter.innerHTML = "&oplus;"
                 }
             })
             findMissingTmimata()
