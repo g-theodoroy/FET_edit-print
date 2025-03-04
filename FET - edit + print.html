@@ -383,6 +383,8 @@ It is provided as is under "MIT License"
         <div id="aboutBtn" class="undo-redo-button display-inline-block no-print" title="About">&quest;</div>
         <div id="down" onclick="downloadXml()" class="undo-redo-button display-none no-print" title="Download fet file">
             &dArr;</div>
+        <div id="toggleFooter" onclick="toggleFooterVisible()" class="undo-redo-button display-none no-print"
+            title="toggle footer visible">&#9863;</div>
         <div id="prev" onclick="prev()" class="undo-redo-button display-none no-print" title="Undo">&larr;</div>
         <div id="next" onclick="next()" class="undo-redo-button display-none no-print" title="Redo">&rarr;</div>
     </div>
@@ -425,17 +427,19 @@ It is provided as is under "MIT License"
                     <p>email: g.theodoroy&commat;gmail.com</p>
                 </blockquote>
                 <p>It is provided as is under "MIT License": https://opensource.org/license/mit</p>
-                
+
                 <p>&nbsp;</p>
 
                 <p>FET - edit + print is free. If you like you can treat me a coffee ...</p>
-               
+
                 <form action="https://www.paypal.com/donate" method="post" target="_blank" style="text-align: center">
                     <input type="hidden" name="hosted_button_id" value="C2VEYT3GPPNY4" />
-                    <input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif" border="0" name="submit" title="PayPal - The safer, easier way to pay online!" alt="Donate with PayPal button" />
-                    <img alt="" border="0" src="https://www.paypal.com/en_GR/i/scr/pixel.gif" width="1" height="1" />
-                    </form>
-                    
+                    <input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif" border="0"
+                        name="submit" title="PayPal - The safer, easier way to pay online!"
+                        alt="Donate with PayPal button" />
+                    <!-- <img alt="" border="0" src="https://www.paypal.com/en_GR/i/scr/pixel.gif" width="1" height="1" /> -->
+                </form>
+
             </div>
         </div>
     </div>
@@ -486,6 +490,7 @@ It is provided as is under "MIT License"
         let hoursLength = null
         let tmimataArray = []
         let noTeacher = false;
+        let showFooter = false;
 
         // add event listener to file element
         document.getElementById('xmlFileInput').addEventListener('change', handleFileSelect, false);
@@ -545,6 +550,8 @@ It is provided as is under "MIT License"
             document.getElementById('next').classList.add('display-inline-block')
             document.getElementById('down').classList.remove('display-none')
             document.getElementById('down').classList.add('display-inline-block')
+            document.getElementById('toggleFooter').classList.remove('display-none')
+            document.getElementById('toggleFooter').classList.add('display-inline-block')
         }
 
         // Download modified XML
@@ -711,7 +718,7 @@ It is provided as is under "MIT License"
             URL.revokeObjectURL(url);
         }
 
-        // format xml. (it is not elegant but does the job)
+        // format xml (it is not elegant but does the job)
         /* the desired result
           <ConstraintActivityPreferredStartingTime>
                   <Weight_Percentage>100</Weight_Percentage>
@@ -893,8 +900,7 @@ It is provided as is under "MIT License"
             let row = tfoot.insertRow()
             for (i = 0; i < tableColNum; i++) {
                 let cell = row.insertCell()
-                cell.classList.add('footer')
-                cell.classList.add('no-print')
+                cell.classList.add('footer', 'no-print', 'display-none')
             }
 
 
@@ -1117,6 +1123,8 @@ It is provided as is under "MIT License"
 
             const highlighted = Array.from(document.querySelectorAll('.highlight'))
             highlighted.forEach(c => c.classList.remove('highlight'))
+
+            findMissingTmimata()
         }
 
 
@@ -1512,8 +1520,13 @@ It is provided as is under "MIT License"
 
                 // if groups left in array set thead and tfoot to inform user
                 if (colTmimataArray.length) {
-                    table.tHead.rows[1].cells[i - 1].style.background = '#eeeeee'
-                    table.tHead.rows[1].cells[i - 1].setAttribute('info', colTmimataArray)
+                    if (showFooter) {
+                        table.tHead.rows[1].cells[i - 1].style.background = '#eeeeee'
+                        table.tHead.rows[1].cells[i - 1].setAttribute('info', 'groups with no activity\n' + colTmimataArray)
+                    } else {
+                        table.tHead.rows[1].cells[i - 1].style.background = ''
+                        table.tHead.rows[1].cells[i - 1].setAttribute('info', '')
+                    }
                     table.tFoot.rows[0].cells[i].textContent = colTmimataArray
                 } else {
                     table.tHead.rows[1].cells[i - 1].style.background = ''
@@ -1714,6 +1727,22 @@ It is provided as is under "MIT License"
                 closeError();
             }
         });
+
+        function toggleFooterVisible() {
+            showFooter = !showFooter
+            const toggleFooter = document.getElementById('toggleFooter')
+            let allFootCells = Array.from(document.querySelectorAll(`.footer`))
+            allFootCells.forEach(c => {
+                if (showFooter) {
+                    c.classList.remove('display-none')
+                    toggleFooter.title = "toggle footer invisible"
+                } else {
+                    c.classList.add('display-none')
+                    toggleFooter.title = "toggle footer visible"
+                }
+            })
+            findMissingTmimata()
+        }
 
         // clear session 
         window.onbeforeunload = () => sessionStorage.clear()
