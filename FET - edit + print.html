@@ -1655,6 +1655,7 @@ It is provided as is under "MIT License"
 
             eventListeners()
             showHidePrevNext()
+            doToggleFooter()
         }
 
         function next() {
@@ -1670,6 +1671,7 @@ It is provided as is under "MIT License"
 
             eventListeners()
             showHidePrevNext()
+            doToggleFooter()
         }
 
         function showHidePrevNext() {
@@ -1746,6 +1748,10 @@ It is provided as is under "MIT License"
 
         function toggleFooterVisible() {
             showFooter = !showFooter
+            doToggleFooter()
+       }
+
+        function doToggleFooter(){
             const toggleFooter = document.getElementById('toggleFooter')
             let allFootCells = Array.from(document.querySelectorAll(`.footer`))
             allFootCells.forEach(c => {
