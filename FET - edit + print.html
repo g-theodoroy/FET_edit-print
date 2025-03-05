@@ -384,7 +384,7 @@ It is provided as is under "MIT License"
         <div id="down" onclick="downloadXml()" class="undo-redo-button display-none no-print" title="Download fet file">
             &dArr;</div>
         <div id="toggleFooter" onclick="toggleFooterVisible()" class="undo-redo-button display-none no-print"
-            title="toggle footer visible">&oplus;</div>
+            title="Toggle footer visible">&oplus;</div>
         <div id="prev" onclick="prev()" class="undo-redo-button display-none no-print" title="Undo">&larr;</div>
         <div id="next" onclick="next()" class="undo-redo-button display-none no-print" title="Redo">&rarr;</div>
     </div>
@@ -548,6 +548,10 @@ It is provided as is under "MIT License"
             document.getElementById('down').classList.add('display-inline-block')
             document.getElementById('toggleFooter').classList.remove('display-none')
             document.getElementById('toggleFooter').classList.add('display-inline-block')
+            document.getElementById('next').classList.remove('display-none')
+            document.getElementById('next').classList.add('display-inline-block')
+            document.getElementById('prev').classList.remove('display-none')
+            document.getElementById('prev').classList.add('display-inline-block')
         }
 
         // Download modified XML
@@ -1512,8 +1516,6 @@ It is provided as is under "MIT License"
 
                 }
 
-                //if (colTmimataArray == tmimataArray) colTmimataArray = []
-
                 // if groups left in array set thead and tfoot to inform user
                 if (colTmimataArray.length) {
                     if (showFooter) {
@@ -1674,22 +1676,16 @@ It is provided as is under "MIT License"
             const first = sessionStorage.getItem("first-table-index")
             const last = sessionStorage.getItem("last-table-index")
             const current = sessionStorage.getItem("current-table-index")
-            if (current) {
-                document.getElementById('next').classList.remove('display-none')
-                document.getElementById('next').classList.add('display-inline-block')
-                document.getElementById('prev').classList.remove('display-none')
-                document.getElementById('prev').classList.add('display-inline-block')
-            }
-
-            if (current == last) {
-                document.getElementById('next').classList.add('display-none')
-                document.getElementById('next').classList.remove('display-inline-block')
+           if (current == last) {
+                document.getElementById('next').style.visibility = 'hidden'
+            } else {
+                document.getElementById('next').style.visibility = 'visible'
             }
             if (current == first) {
-                document.getElementById('prev').classList.add('display-none')
-                document.getElementById('prev').classList.remove('display-inline-block')
+                document.getElementById('prev').style.visibility = 'hidden'
+            } else {
+                document.getElementById('prev').style.visibility = 'visible'
             }
-
         }
 
         // Get the modal
@@ -1755,11 +1751,11 @@ It is provided as is under "MIT License"
             allFootCells.forEach(c => {
                 if (showFooter) {
                     c.classList.remove('display-none')
-                    toggleFooter.title = "toggle footer invisible"
+                    toggleFooter.title = "Toggle footer invisible"
                     toggleFooter.innerHTML = "&otimes;"
                 } else {
                     c.classList.add('display-none')
-                    toggleFooter.title = "toggle footer visible"
+                    toggleFooter.title = "Toggle footer visible"
                     toggleFooter.innerHTML = "&oplus;"
                 }
             })
