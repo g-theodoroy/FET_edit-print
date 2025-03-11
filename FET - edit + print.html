@@ -385,6 +385,8 @@ It is provided as is under "MIT License"
             &dArr;</div>
         <div id="toggleFooter" onclick="toggleFooterVisible()" class="undo-redo-button display-none no-print"
             title="Toggle footer visible">&oplus;</div>
+        <div id="setTitle" onclick="setTitle()" class="undo-redo-button display-none no-print" title="Set title">&#9997;
+        </div>
         <div id="prev" onclick="prev()" class="undo-redo-button display-none no-print" title="Undo">&larr;</div>
         <div id="next" onclick="next()" class="undo-redo-button display-none no-print" title="Redo">&rarr;</div>
     </div>
@@ -433,10 +435,10 @@ It is provided as is under "MIT License"
                 <p>FET - edit + print is free. If you like you can treat me a coffee ...</p>
 
                 <form action="https://www.paypal.com/donate" method="post" target="_blank" style="text-align: center">
-                    <input type="hidden" name="hosted_button_id" value="C2VEYT3GPPNY4" />
-                    <input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif" border="0"
+                    <input type="hidden" name="hosted_button_id" value="C2VEYT3GPPNY4">
+                    <input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif"
                         name="submit" title="PayPal - The safer, easier way to pay online!"
-                        alt="Donate with PayPal button" />
+                        alt="Donate with PayPal button">
                     <!-- <img alt="" border="0" src="https://www.paypal.com/en_GR/i/scr/pixel.gif" width="1" height="1" /> -->
                 </form>
 
@@ -548,6 +550,8 @@ It is provided as is under "MIT License"
             document.getElementById('down').classList.add('display-inline-block')
             document.getElementById('toggleFooter').classList.remove('display-none')
             document.getElementById('toggleFooter').classList.add('display-inline-block')
+            document.getElementById('setTitle').classList.remove('display-none')
+            document.getElementById('setTitle').classList.add('display-inline-block')
             document.getElementById('next').classList.remove('display-none')
             document.getElementById('next').classList.add('display-inline-block')
             document.getElementById('prev').classList.remove('display-none')
@@ -732,15 +736,15 @@ It is provided as is under "MIT License"
         */
         function prettyFormatXml(xml) {
             xml = xml.replace(/\n{2,}/g, '\n');
-            xml = xml.replace(/(<ConstraintActivityPreferredStartingTime>)(<)/g, '$1\n       $2')
-            xml = xml.replace(/(<\/Weight_Percentage>)(<)/g, '$1\n       $2')
-            xml = xml.replace(/(<\/Activity_Id>)(<)/g, '$1\n       $2')
-            xml = xml.replace(/(<\/Preferred_Day>)(<)/g, '$1\n       $2')
-            xml = xml.replace(/(<\/Preferred_Hour>)(<)/g, '$1\n       $2')
-            xml = xml.replace(/(<\/Permanently_Locked>)(<)/g, '$1\n       $2')
-            xml = xml.replace(/(<\/Active>)(<)/g, '$1\n       $2')
-            xml = xml.replace(/(<Comments\/>)(<)/g, '$1\n$2')
-            xml = xml.replace(/(<\/ConstraintActivityPreferredStartingTime>)(<)/g, '$1\n$2')
+            xml = xml.replace(/(<ConstraintActivityPreferredStartingTime>)(<)/g, '  $1\n      $2')
+            xml = xml.replace(/(<\/Weight_Percentage>)(<)/g, '$1\n      $2')
+            xml = xml.replace(/(<\/Activity_Id>)(<)/g, '$1\n      $2')
+            xml = xml.replace(/(<\/Preferred_Day>)(<)/g, '$1\n      $2')
+            xml = xml.replace(/(<\/Preferred_Hour>)(<)/g, '$1\n      $2')
+            xml = xml.replace(/(<\/Permanently_Locked>)(<)/g, '$1\n      $2')
+            xml = xml.replace(/(<\/Active>)(<)/g, '$1\n      $2')
+            xml = xml.replace(/(<Comments\/>)(<)/g, '$1\n    $2')
+            xml = xml.replace(/(<\/ConstraintActivityPreferredStartingTime>)(\s*<)/g, '$1\n  $2')
             return xml
         }
 
@@ -1678,7 +1682,7 @@ It is provided as is under "MIT License"
             const first = sessionStorage.getItem("first-table-index")
             const last = sessionStorage.getItem("last-table-index")
             const current = sessionStorage.getItem("current-table-index")
-           if (current == last) {
+            if (current == last) {
                 document.getElementById('next').style.visibility = 'hidden'
             } else {
                 document.getElementById('next').style.visibility = 'visible'
@@ -1749,7 +1753,7 @@ It is provided as is under "MIT License"
         function toggleFooterVisible() {
             showFooter = !showFooter
             doToggleFooter()
-       }
+        }
 
         function doToggleFooter(){
             const toggleFooter = document.getElementById('toggleFooter')
@@ -1766,6 +1770,14 @@ It is provided as is under "MIT License"
                 }
             })
             findMissingTmimata()
+        }
+
+        function setTitle() {
+            let title = prompt('Input title to be printed')
+            if (!title.trim()) {
+                return
+            }
+            document.getElementById('title').textContent = title.trim();
         }
 
         // clear session 
