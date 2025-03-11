@@ -378,17 +378,13 @@ It is provided as is under "MIT License"
     </div>
 
     <div id="undo-redo">
-        <div id="refresh" onclick="window.location.reload()" class="undo-redo-button display-inline-block no-print"
-            title="Reload">&#10227;</div>
+        <div id="refresh" onclick="window.location.reload()" class="undo-redo-button display-inline-block no-print" title="Reload">&#10227;</div>
         <div id="aboutBtn" class="undo-redo-button display-inline-block no-print" title="About">&quest;</div>
-        <div id="down" onclick="downloadXml()" class="undo-redo-button display-none no-print" title="Download fet file">
-            &dArr;</div>
-        <div id="toggleFooter" onclick="toggleFooterVisible()" class="undo-redo-button display-none no-print"
-            title="Toggle footer visible">&oplus;</div>
-        <div id="setTitle" onclick="setTitle()" class="undo-redo-button display-none no-print" title="Set title">&#9997;
-        </div>
-        <div id="prev" onclick="prev()" class="undo-redo-button display-none no-print" title="Undo">&larr;</div>
-        <div id="next" onclick="next()" class="undo-redo-button display-none no-print" title="Redo">&rarr;</div>
+        <div id="down" onclick="downloadXml()" class="undo-redo-button display-none no-print show-hide" title="Download fet file">&dArr;</div>
+        <div id="toggleFooter" onclick="toggleFooterVisible()" class="undo-redo-button display-none no-print show-hide" title="Toggle footer visible">&oplus;</div>
+        <div id="setTitle" onclick="setTitle()" class="undo-redo-button display-none no-print show-hide" title="Set title">&#9997;</div>
+        <div id="prev" onclick="prev()" class="undo-redo-button display-none no-print show-hide" title="Undo">&larr;</div>
+        <div id="next" onclick="next()" class="undo-redo-button display-none no-print show-hide" title="Redo">&rarr;</div>
     </div>
 
     <div id="tablecontainer">
@@ -546,16 +542,12 @@ It is provided as is under "MIT License"
             document.getElementById('xmlFileInput').value = '';
             document.getElementById('container').style.display = 'none';
             document.getElementById('title').textContent = file.name;
-            document.getElementById('down').classList.remove('display-none')
-            document.getElementById('down').classList.add('display-inline-block')
-            document.getElementById('toggleFooter').classList.remove('display-none')
-            document.getElementById('toggleFooter').classList.add('display-inline-block')
-            document.getElementById('setTitle').classList.remove('display-none')
-            document.getElementById('setTitle').classList.add('display-inline-block')
-            document.getElementById('next').classList.remove('display-none')
-            document.getElementById('next').classList.add('display-inline-block')
-            document.getElementById('prev').classList.remove('display-none')
-            document.getElementById('prev').classList.add('display-inline-block')
+            // loop through buttons with class 'show-hide' and set them visible
+            const showHide = Array.from(document.querySelectorAll(`.show-hide`))
+            showHide.forEach(el =>{
+                el.classList.remove('display-none')
+                el.classList.add('display-inline-block')
+            })
         }
 
         // Download modified XML
@@ -851,7 +843,6 @@ It is provided as is under "MIT License"
 
                 if (!teachers.length) noTeacher = true
             }
-
 
             if (noTeacher) {
                 teachersIndexList['notAv'] = Object.keys(teachersIndexList).length + 2
@@ -1218,7 +1209,6 @@ It is provided as is under "MIT License"
             //return hsp > 127.5;
             return hsp > 150;
         }
-
 
         function handleDragStart(e) {
             draggedElement = e.target;
