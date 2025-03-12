@@ -188,6 +188,7 @@ It is provided as is under "MIT License"
             position: fixed;
             top: 5px;
             left: 50%;
+            transform: translateX(-50%);
             font-weight: normal;
             font-size: 16px;
             background-color: #fafafa;
@@ -380,6 +381,7 @@ It is provided as is under "MIT License"
     <div id="undo-redo">
         <div id="refresh" onclick="window.location.reload()" class="undo-redo-button display-inline-block no-print" title="Reload">&#10227;</div>
         <div id="aboutBtn" class="undo-redo-button display-inline-block no-print" title="About">&quest;</div>
+        <div id="rtl" onclick="changeDirection()" class="undo-redo-button display-none no-print show-hide" title="Change direction">&harr;</div>
         <div id="down" onclick="downloadXml()" class="undo-redo-button display-none no-print show-hide" title="Download fet file">&dArr;</div>
         <div id="toggleFooter" onclick="toggleFooterVisible()" class="undo-redo-button display-none no-print show-hide" title="Toggle footer visible">&oplus;</div>
         <div id="setTitle" onclick="setTitle()" class="undo-redo-button display-none no-print show-hide" title="Set title">&#9997;</div>
@@ -544,7 +546,7 @@ It is provided as is under "MIT License"
             document.getElementById('title').textContent = file.name;
             // loop through buttons with class 'show-hide' and set them visible
             const showHide = Array.from(document.querySelectorAll(`.show-hide`))
-            showHide.forEach(el =>{
+            showHide.forEach(el => {
                 el.classList.remove('display-none')
                 el.classList.add('display-inline-block')
             })
@@ -905,7 +907,7 @@ It is provided as is under "MIT License"
             cell = row.insertCell()
             cell.rowSpan = 2
             cell.textContent = "FET - edit + print";
-            cell.style.borderRightWidth = borderWidth
+            cell.classList.add('mark-border')
             cell.style.background = '#f5fbff'
             cell.style.textAlign = 'center'
             cell.style.fontSize = '20px'
@@ -919,7 +921,7 @@ It is provided as is under "MIT License"
                 cell.colSpan = NumOfHours
                 cell.textContent = dateName
                 cell.classList.add('text-center', 'day')
-                cell.style.borderRightWidth = borderWidth
+                cell.classList.add('mark-border')
                 cell.style.cursor = 'pointer'
                 cell.title = 'Do not print'
                 cell.setAttribute('index', i + 1)
@@ -941,7 +943,7 @@ It is provided as is under "MIT License"
                     cell.classList.add('text-center', 'hour')
 
                     if (j == hours.length - 1) {
-                        cell.style.borderRightWidth = borderWidth
+                        cell.classList.add('mark-border')
                     }
                 }
             }
@@ -955,14 +957,14 @@ It is provided as is under "MIT License"
                 cell = row.insertCell()
                 cell.textContent = Object.keys(teachersIndexList)[i] == 'notAv' ? '' : Object.keys(teachersIndexList)[i]
                 cell.classList.add('text-small')
-                cell.style.borderRightWidth = borderWidth
+                cell.classList.add('mark-border')
                 // cells of schedule
                 for (let j = 0; j < days.length; j++) {
                     for (let k = 0; k < hours.length; k++) {
                         cell = row.insertCell()
                         cell.classList.add('program')
                         if (k == hours.length - 1) {
-                            cell.style.borderRightWidth = borderWidth
+                            cell.classList.add('mark-border')
                         }
                         // set to every cell values of day and hour to be accesible later
                         cell.setAttribute('day', days[j].getElementsByTagName("Name")[0].textContent)
@@ -1036,6 +1038,9 @@ It is provided as is under "MIT License"
                 }
             }
 
+            // if Activities left in objAct means that 
+            // these activities have no preferedStartingTime
+            // so they must be put to warehouse
             for (let index of Object.keys(objAct)) {
                 for (i = 0; i < objAct[index].teacher.length; i++) {
                     // create the cards (spans)
@@ -1119,6 +1124,7 @@ It is provided as is under "MIT License"
             const highlighted = Array.from(document.querySelectorAll('.highlight'))
             highlighted.forEach(c => c.classList.remove('highlight'))
 
+            markBorder()
             findMissingTmimata()
         }
 
@@ -1745,7 +1751,7 @@ It is provided as is under "MIT License"
             doToggleFooter()
         }
 
-        function doToggleFooter(){
+        function doToggleFooter() {
             const toggleFooter = document.getElementById('toggleFooter')
             let allFootCells = Array.from(document.querySelectorAll(`.footer`))
             allFootCells.forEach(c => {
@@ -1768,6 +1774,42 @@ It is provided as is under "MIT License"
                 return
             }
             document.getElementById('title').textContent = title.trim();
+        }
+
+        function markBorder() {
+            const markBorder = Array.from(document.querySelectorAll(`.mark-border`))
+            markBorder.forEach(el => {
+                //if (document.documentElement.hasAttribute('dir')) {
+                if (document.getElementById('tablecontainer').hasAttribute('dir')) {
+                    el.style.borderLeftWidth = 'medium';
+                    el.style.borderRightWidth = 'thin';
+                } else {
+                    el.style.borderRightWidth = 'medium';
+                    el.style.borderLeftWidth = 'thin';
+                }
+            })
+        }
+
+        function changeDirection() {
+            const direction = localStorage.getItem("direction")
+            if (!direction) {
+                localStorage.setItem("direction", 'rtl')
+                document.getElementById('tablecontainer').setAttribute('dir', 'rtl')
+            } else {
+                // document.documentElement.removeAttribute('dir')
+                document.getElementById('tablecontainer').removeAttribute('dir')
+                localStorage.removeItem("direction")
+                document.getElementById('prev').innerHTML = '&larr;'
+                document.getElementById('next').innerHTML = '&rarr;'
+            }
+            markBorder()
+        }
+
+        window.onload = () => {
+
+            if (localStorage.getItem("direction")) {
+                document.getElementById('tablecontainer').setAttribute('dir', 'rtl')
+            }
         }
 
         // clear session 
