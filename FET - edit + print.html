@@ -127,11 +127,15 @@ It is provided as is under "MIT License"
             border-radius: 4px;
             user-select: none;
             text-align: center;
-            overflow: hidden;
+            /* overflow: hidden; */
         }
 
         .warn-span {
             border-bottom: 3px solid #b80404;
+        }
+
+        .display-block {
+            display: block;
         }
 
         .display-inline-block {
@@ -367,6 +371,19 @@ It is provided as is under "MIT License"
         .error-close-btn:hover {
             background-color: #b30000;
         }
+
+        .top-span {
+            font-size: 6px;
+            /* font-size: xx-small; */
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .bottom-span {
+            display: block;
+            width: 100%;
+            overflow: hidden;
+        }
     </style>
 </head>
 
@@ -384,6 +401,7 @@ It is provided as is under "MIT License"
         <div id="rtl" onclick="changeDirection()" class="undo-redo-button display-none no-print show-hide" title="Change direction">&harr;</div>
         <div id="down" onclick="downloadXml()" class="undo-redo-button display-none no-print show-hide" title="Download fet file">&dArr;</div>
         <div id="toggleFooter" onclick="toggleFooterVisible()" class="undo-redo-button display-none no-print show-hide" title="Toggle footer visible">&oplus;</div>
+        <div id="showSubject" onclick="showSubject()" class="undo-redo-button display-none no-print show-hide" title="Show/Hide subject">&ctdot;</div>
         <div id="setTitle" onclick="setTitle()" class="undo-redo-button display-none no-print show-hide" title="Set title">&#9997;</div>
         <div id="prev" onclick="prev()" class="undo-redo-button display-none no-print show-hide" title="Undo">&larr;</div>
         <div id="next" onclick="next()" class="undo-redo-button display-none no-print show-hide" title="Redo">&rarr;</div>
@@ -1001,7 +1019,7 @@ It is provided as is under "MIT License"
                 tmimaSpan.setAttribute("tmima", objActivitiesStartTimes[i].data.tmimata);
                 tmimaSpan.setAttribute("row", row.rowIndex);
                 tmimaSpan.setAttribute("col", cell.cellIndex);
-                tmimaSpan.textContent = objActivitiesStartTimes[i].data.tmima;
+                tmimaSpan.innerHTML = '<span class="top-span display-none">' + objActivitiesStartTimes[i].data.subject + '</span>' + '<span class="bottom-span">' + objActivitiesStartTimes[i].data.tmima + '</span>';
                 tmimaSpan.setAttribute('info', objActivitiesStartTimes[i].data.tmima + " - " + objActivitiesStartTimes[i].data.duration + '/' + objActivitiesStartTimes[i].data.totalDuration + "\n" + objActivitiesStartTimes[i].data.subject + "\n" + objActivitiesStartTimes[i].data.teacherStr)
                 tmimaSpan.draggable = true;
                 if (showColors) tmimaSpan.style.background = objActivitiesStartTimes[i].color
@@ -1049,7 +1067,7 @@ It is provided as is under "MIT License"
                     tmimaSpan.setAttribute("tmima", objAct[index].tmimata);
                     tmimaSpan.setAttribute("row", teachersIndexList[objAct[index].teacher[i]]);
                     tmimaSpan.setAttribute("col", apothikiColumnIndex);
-                    tmimaSpan.textContent = objAct[index].tmima;
+                    tmimaSpan.innerHTML = '<span class="top-span display-none">' + objAct[index].subject + '</span>' + '<span class="bottom-span">' + objAct[index].tmima + '</span>';
                     tmimaSpan.setAttribute('info', objAct[index].tmima + " - " + objAct[index].duration + '/' + objAct[index].totalDuration + "\n" + objAct[index].subject + "\n" + objAct[index].teacherStr)
                     tmimaSpan.draggable = true;
                     if (showColors) tmimaSpan.style.background = teachersColor[objAct[index].teacher[i]]
@@ -1802,6 +1820,20 @@ It is provided as is under "MIT License"
                 document.getElementById('next').innerHTML = '&rarr;'
             }
             markBorder()
+        }
+
+        function showSubject(){
+            const topSpans = Array.from(document.querySelectorAll(`.top-span`))
+            topSpans.forEach(el => {
+                if (el.classList.contains('display-none')) {
+                    el.classList.remove('display-none')
+                    el.classList.add('display-block')
+                } else {
+                    el.classList.remove('display-block')
+                    el.classList.add('display-none')
+                }
+            })
+
         }
 
         window.onload = () => {
