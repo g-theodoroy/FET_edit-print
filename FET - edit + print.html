@@ -1786,7 +1786,7 @@ It is provided as is under "MIT License"
         }
 
         function setTitle() {
-            let title = prompt('Input title to be printed')
+            let title = prompt('Input title to be printed', document.getElementById('title').textContent)
             if (!title.trim()) {
                 return
             }
@@ -1823,14 +1823,19 @@ It is provided as is under "MIT License"
         }
 
         function showSubject(){
+            // get all top-spans of cards that show subject
             const topSpans = Array.from(document.querySelectorAll(`.top-span`))
             topSpans.forEach(el => {
                 if (el.classList.contains('display-none')) {
+                    // make them visible and vertcal align bottom
                     el.classList.remove('display-none')
                     el.classList.add('display-block')
+                    el.parentElement.parentElement.style.verticalAlign = 'bottom'
                 } else {
+                    // make them invisible and vertcal align middle
                     el.classList.remove('display-block')
                     el.classList.add('display-none')
+                    el.parentElement.parentElement.style.verticalAlign = 'middle'
                 }
             })
 
