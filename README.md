@@ -1,12 +1,22 @@
 # FET - edit + print
-
-A html file that can be used to
-- load a .fet (xml) file made by **FET Free Timetabling Software**
-- manual edit (drag and drop) schedule
-- print one day or more days schedule
+    
+A .html file that can be used to
+- import a .fet  (xml) file of schedule made by **FET Free Timetabling Software**
+- set direction right to left (rtl) - left to right (ltr)
+- manual Drag and Drop with mouse to modify the cards (schedule)
+- color marked cells suggest card placements - movements
+- warning on conflicts
+- when is set visible, footer shows groups with no activity for hour
+- Undo Redo capability
+- double click to send card to warehouse (exclude from schedule)
+- unavailable teacher hours are marked
+- if a card is placed in an unavailable hour cell a red line appears
+- select which days to be printed
+- set the title to be printed
+- show/hide subjects. Set font size
 - save (download) modified .fet file
 
-Works in all modern browsers. It is licensed under the MIT License
+Works in all modern browsers. It is licensed under MIT License
 
 https://opensource.org/license/mit
 
