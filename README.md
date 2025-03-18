@@ -48,7 +48,7 @@ g.theodoroy@gmail.com
 
 - Vangelis Karafillidis
 
-Thanks for acceptance, advices, encourage !!!
+Thanks for acceptance, advices, encouragement !!!
 
 
 
