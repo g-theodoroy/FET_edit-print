@@ -167,13 +167,13 @@ It is provided as is under "MIT License"
             pointer-events: none;
         }
 
-        td.apothiki {
+        td.warehouse {
             border: none;
             min-width: calc(var(--tile-width)*3);
             background-color: #fafafa;
         }
 
-        td.apothiki>* {
+        td.warehouse>* {
             vertical-align: middle;
         }
 
@@ -509,7 +509,7 @@ It is provided as is under "MIT License"
         let loadedXml = null;
         let xmlName = null;
         let draggedElement = null;
-        let apothikiColumnIndex = null;
+        let warehouseColumnIndex = null;
         let hoursLength = null
         let tmimataArray = []
         let noTeacher = false;
@@ -620,7 +620,7 @@ It is provided as is under "MIT License"
             // if allSpans contains entries must append them to xml
 
             // filter to exclude cards in warehouse
-            allSpans = allSpans.filter(sp => !(sp.getAttribute('col') == apothikiColumnIndex))
+            allSpans = allSpans.filter(sp => !(sp.getAttribute('col') == warehouseColumnIndex))
 
             //remove the remaining double card od cards with same id (2 teachers in 1 class)
             let toRemove = []
@@ -693,7 +693,7 @@ It is provided as is under "MIT License"
 
             }
 
-            // ask user to confirm if wants to set all time constrains to innactive
+            // ask user to confirm if wants to set all time constraints to inactive
             var ok = confirm('Disable all unnecessary constrains?\nPlease confirm.')
             if (ok) {
 
@@ -835,7 +835,7 @@ It is provided as is under "MIT License"
             const objAct = {}
 
             for (let i = 0; i < activities.length; i++) {
-                // teachers might be one ot two so i make an array of them
+                // teachers might be one or two so i make an array of them
                 const teachers = activities[i].getElementsByTagName("Teacher")
                 let teacherArray = []
                 for (let j = 0; j < teachers.length; j++) {
@@ -996,9 +996,9 @@ It is provided as is under "MIT License"
                 }
                 // warehouse
                 cell = row.insertCell()
-                cell.classList.add('apothiki')
+                cell.classList.add('warehouse')
                 cell.classList.add('no-print')
-                apothikiColumnIndex = cell.cellIndex
+                warehouseColumnIndex = cell.cellIndex
 
             }
 
@@ -1025,7 +1025,7 @@ It is provided as is under "MIT License"
                 tmimaSpan.setAttribute("tmima", objActivitiesStartTimes[i].data.tmimata);
                 tmimaSpan.setAttribute("row", row.rowIndex);
                 tmimaSpan.setAttribute("col", cell.cellIndex);
-                tmimaSpan.innerHTML = '<span class="top-span display-none" style="font-size:6px">' + objActivitiesStartTimes[i].data.subject + '</span>' + '<span class="bottom-span">' + objActivitiesStartTimes[i].data.tmima + '</span>';
+                tmimaSpan.innerHTML = '<span class="top-span display-none" style="font-size:0.4rem">' + objActivitiesStartTimes[i].data.subject + '</span>' + '<span class="bottom-span">' + objActivitiesStartTimes[i].data.tmima + '</span>';
                 tmimaSpan.setAttribute('info', objActivitiesStartTimes[i].data.tmima + " - " + objActivitiesStartTimes[i].data.duration + '/' + objActivitiesStartTimes[i].data.totalDuration + "\n" + objActivitiesStartTimes[i].data.subject + "\n" + objActivitiesStartTimes[i].data.teacherStr)
                 tmimaSpan.draggable = true;
                 if (showColors) tmimaSpan.style.background = objActivitiesStartTimes[i].color
@@ -1052,7 +1052,7 @@ It is provided as is under "MIT License"
                         // cell 1  => start = 0,  stop = 2
                         // cell 2  => start = -1, stop = 1
                         // cell 3 => start = -2,  stop = 0
-                        // that way i know in witch cell the card belongs
+                        // that way i know in which cell the card belongs
                         row.cells[index + j].setAttribute('tmima', objActivitiesStartTimes[i].data.tmimata)
                         row.cells[index + j].setAttribute('start', 0 - j)
                         row.cells[index + j].setAttribute('stop', clspn - 1 - j)
@@ -1072,7 +1072,7 @@ It is provided as is under "MIT License"
                     tmimaSpan.id = index;
                     tmimaSpan.setAttribute("tmima", objAct[index].tmimata);
                     tmimaSpan.setAttribute("row", teachersIndexList[objAct[index].teacher[i]]);
-                    tmimaSpan.setAttribute("col", apothikiColumnIndex);
+                    tmimaSpan.setAttribute("col", warehouseColumnIndex);
                     tmimaSpan.innerHTML = '<span class="top-span display-none" style="font-size:6px">' + objAct[index].subject + '</span>' + '<span class="bottom-span">' + objAct[index].tmima + '</span>';
                     tmimaSpan.setAttribute('info', objAct[index].tmima + " - " + objAct[index].duration + '/' + objAct[index].totalDuration + "\n" + objAct[index].subject + "\n" + objAct[index].teacherStr)
                     tmimaSpan.draggable = true;
@@ -1086,7 +1086,7 @@ It is provided as is under "MIT License"
                         tmimaSpan.setAttribute("w", clspn);
                     }
                     // add card to cell
-                    table.rows[tmimaSpan.getAttribute('row')].cells[apothikiColumnIndex].appendChild(tmimaSpan)
+                    table.rows[tmimaSpan.getAttribute('row')].cells[warehouseColumnIndex].appendChild(tmimaSpan)
 
                 }
 
@@ -1342,7 +1342,7 @@ It is provided as is under "MIT License"
 
                 // if card size is 2 or 3 i check also the next cells if they have cards
                 for (i = 0; i < dragElSize; i++) {
-                    if (columnIndex == apothikiColumnIndex) { break }
+                    if (columnIndex == warehouseColumnIndex) { break }
                     const newCell = table.rows[elRow].cells[+columnIndex + +i]
                     // if next cell has id, that means that a card is placed in it
                     if (newCell.id) {
@@ -1416,8 +1416,9 @@ It is provided as is under "MIT License"
                 if (newCell.id) {
                     const existingElements = Array.from(document.querySelectorAll(`span[id="${newCell.id}"]`))
                     existingElements.forEach(exel => {
-                        exel.setAttribute('col', apothikiColumnIndex)
-                        table.rows[exel.getAttribute('row')].cells[apothikiColumnIndex].appendChild(exel)
+                        exel.setAttribute('col', warehouseColumnIndex)
+                        exel.classList.remove('warn-span')
+                        table.rows[exel.getAttribute('row')].cells[warehouseColumnIndex].appendChild(exel)
                     })
                     // clear all cells that had the card from the data
                     const existingElementsCells = Array.from(document.querySelectorAll(`td[id="${newCell.id}"]`))
@@ -1438,7 +1439,7 @@ It is provided as is under "MIT License"
                 // set data to cells depending in card size
                 for (i = 0; i < dragElSize; i++) {
                     // if drop is in warehouse no need to do anything of these
-                    if (columnIndex == apothikiColumnIndex) { break }
+                    if (columnIndex == warehouseColumnIndex) { break }
 
                     // get cell
                     const newCell = table.rows[elRow].cells[+columnIndex + +i]
@@ -1450,10 +1451,11 @@ It is provided as is under "MIT License"
                     if (newCell.id) {
                         const existingElements = Array.from(document.querySelectorAll(`span[id="${newCell.id}"]`))
                         existingElements.forEach(el => {
-                            el.setAttribute('col', apothikiColumnIndex)
-                            table.rows[el.getAttribute('row')].cells[apothikiColumnIndex].appendChild(el)
+                            el.setAttribute('col', warehouseColumnIndex)
+                            el.classList.remove('warn-span')
+                            table.rows[el.getAttribute('row')].cells[warehouseColumnIndex].appendChild(el)
                         })
-                        // remove data attributes from cells that conatained previous card 
+                        // remove data attributes from cells that contained previous card 
                         const existingElementsCells = Array.from(document.querySelectorAll(`td[id="${newCell.id}"]`))
                         existingElementsCells.forEach(exelcell => {
                             exelcell.removeAttribute('id')
@@ -1496,8 +1498,8 @@ It is provided as is under "MIT License"
                     cellsClear.forEach(el => {
                         // if card is present i send it in warehouse
                         if (el.firstChild) {
-                            el.firstChild.setAttribute('col', apothikiColumnIndex)
-                            table.rows[el.firstChild.getAttribute('row')].cells[apothikiColumnIndex].appendChild(el.firstChild)
+                            el.firstChild.setAttribute('col', warehouseColumnIndex)
+                            table.rows[el.firstChild.getAttribute('row')].cells[warehouseColumnIndex].appendChild(el.firstChild)
                         }
                         // clean data attributes
                         el.removeAttribute('id')
@@ -1558,7 +1560,7 @@ It is provided as is under "MIT License"
 
         }
 
-        // swaps print-noprint for speciphic day
+        // swaps print-noprint for specific day
         function dayNotPrint(day) {
             const table = document.getElementById('programTable')
 
@@ -1594,8 +1596,8 @@ It is provided as is under "MIT License"
             const table = document.getElementById("programTable");
             const existingElements = Array.from(document.querySelectorAll(`span[id="${id}"]`))
             existingElements.forEach(el => {
-                el.setAttribute('col', apothikiColumnIndex)
-                table.rows[el.getAttribute('row')].cells[apothikiColumnIndex].appendChild(el)
+                el.setAttribute('col', warehouseColumnIndex)
+                table.rows[el.getAttribute('row')].cells[warehouseColumnIndex].appendChild(el)
             })
             const existingElementsCells = Array.from(document.querySelectorAll(`td[id="${id}"]`))
             existingElementsCells.forEach(el => {
@@ -1868,12 +1870,12 @@ It is provided as is under "MIT License"
             // Determine if the click was on the left or right side
             if (clickX < leftX) {
                 topSpans.forEach(el => {
-                    el.style.fontSize = (parseInt(el.style.fontSize) - 1) + 'px'
+                    el.style.fontSize = (parseFloat(el.style.fontSize) - 0.1) + 'rem'
                     if (el.classList.contains('display-none')) { showSubject() }
                 })
             } else if (clickX > rightX) {
                 topSpans.forEach(el => {
-                    el.style.fontSize = (parseInt(el.style.fontSize) + 1) + 'px'
+                    el.style.fontSize = (parseFloat(el.style.fontSize) + 0.1) + 'rem'
                     if (el.classList.contains('display-none')) { showSubject() }
                 })
             } else {
