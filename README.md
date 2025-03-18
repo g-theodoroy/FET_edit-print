@@ -1,7 +1,7 @@
 # FET - edit + print
     
 A .html file that can be used to
-- import a .fet  (xml) file of schedule made by **FET Free Timetabling Software**
+- open a .fet  (xml) file of schedule made by **FET Free Timetabling Software**
 - set direction right to left (rtl) - left to right (ltr)
 - manual Drag and Drop with mouse to modify the cards (schedule)
 - color marked cells suggest card placements - movements
