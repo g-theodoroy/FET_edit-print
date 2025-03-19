@@ -1,5 +1,7 @@
 # FET - edit + print
-    
+
+![FET - edit + print img](https://drive.google.com/thumbnail?id=1xkc7G7T5UPQtK2pzMaPWRdgWoIAJRAwE&sz=w600)
+ 
 A .html file that can be used to
 - open a .fet  (xml) file of schedule made by **FET Free Timetabling Software**
 - set direction right to left (rtl) - left to right (ltr)
