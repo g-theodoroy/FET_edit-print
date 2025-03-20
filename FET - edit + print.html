@@ -622,7 +622,7 @@ It is provided as is under "MIT License"
             // filter to exclude cards in warehouse
             allSpans = allSpans.filter(sp => !(sp.getAttribute('col') == warehouseColumnIndex))
 
-            //remove the remaining double card od cards with same id (2 teachers in 1 class)
+            //remove the remaining double card of cards with same id (2 teachers in 1 class)
             let toRemove = []
             for (i in allSpans) {
                 // find cards with same id 
@@ -693,7 +693,7 @@ It is provided as is under "MIT License"
 
             }
 
-            // ask user to confirm if wants to set all time constraints to inactive
+            // ask user to confirm if he/she wants to set all time constraints to inactive
             var ok = confirm('Disable all unnecessary constrains?\nPlease confirm.')
             if (ok) {
 
@@ -1325,8 +1325,8 @@ It is provided as is under "MIT License"
             let message = []
 
             // get all cards with the same id as an array and loop
-            const newDraggedElenents1 = Array.from(document.querySelectorAll(`span[id="${draggedElement.id}"]`))
-            newDraggedElenents1.forEach(el => {
+            const newDraggedElements1 = Array.from(document.querySelectorAll(`span[id="${draggedElement.id}"]`))
+            newDraggedElements1.forEach(el => {
                 let elRow = el.getAttribute('row')
                 const newCell = table.rows[elRow].cells[columnIndex]
                 // if drop cell has id, that means that a card is placed in it
@@ -1358,7 +1358,7 @@ It is provided as is under "MIT License"
 
             })
 
-            // check all the others cell in afected columns if they have the same students-division
+            // check all the others cells in affected columns if they have the same students-division
             dragElTmima.forEach(tm => {
                 const otherCells = Array.from(document.querySelectorAll(`td[tmima*="${tm}"]`))
                     .filter(el => el.cellIndex >= columnIndex && el.cellIndex < +columnIndex + +dragElSize && el.id !== draggedElement.id)
@@ -1407,8 +1407,8 @@ It is provided as is under "MIT License"
             })
 
             // get all cards with the same id as an array and loop
-            const newDraggedElenents = Array.from(document.querySelectorAll(`span[id="${draggedElement.id}"]`))
-            newDraggedElenents.forEach(spel => {
+            const newDraggedElements = Array.from(document.querySelectorAll(`span[id="${draggedElement.id}"]`))
+            newDraggedElements.forEach(spel => {
                 let elRow = spel.getAttribute('row')
                 const newCell = table.rows[elRow].cells[columnIndex]
                 spel.setAttribute('col', columnIndex)
@@ -1436,7 +1436,7 @@ It is provided as is under "MIT License"
 
                 let chkNotAvailableCells = false
 
-                // set data to cells depending in card size
+                // set data to cells depending on card size
                 for (i = 0; i < dragElSize; i++) {
                     // if drop is in warehouse no need to do anything of these
                     if (columnIndex == warehouseColumnIndex) { break }
@@ -1597,6 +1597,7 @@ It is provided as is under "MIT License"
             const existingElements = Array.from(document.querySelectorAll(`span[id="${id}"]`))
             existingElements.forEach(el => {
                 el.setAttribute('col', warehouseColumnIndex)
+                el.classList.remove('warn-span')
                 table.rows[el.getAttribute('row')].cells[warehouseColumnIndex].appendChild(el)
             })
             const existingElementsCells = Array.from(document.querySelectorAll(`td[id="${id}"]`))
