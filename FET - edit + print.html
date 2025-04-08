@@ -252,6 +252,10 @@ It is provided as is under "MIT License"
             .no-print {
                 display: none;
             }
+
+            .print-table {
+                page-break-inside: avoid !important;
+            }
         }
 
         /* The Modal (background) */
@@ -403,10 +407,15 @@ It is provided as is under "MIT License"
             title="Download fet file">&dArr;</div>
         <div id="toggleFooter" onclick="toggleFooterVisible()" class="undo-redo-button display-none no-print show-hide"
             title="Toggle footer visible">&oplus;</div>
-        <div id="showSubject" class="undo-redo-button display-none no-print show-hide" title="Show/Hide subject&#10;Click left - right&#10;to set font size">&ctdot;
+        <div id="showSubject" class="undo-redo-button display-none no-print show-hide"
+            title="Show/Hide subject&#10;Click left - right&#10;to set font size">&ctdot;
         </div>
         <div id="setTitle" onclick="setTitle()" class="undo-redo-button display-none no-print show-hide"
             title="Set title">&#9997;</div>
+        <div id="printTeachers" onclick="printTeachersSchedule()"
+            class="undo-redo-button display-none no-print show-hide" title="Print Teachers Schedule">T</div>
+        <div id="printGroups" onclick="printGroupsSchedule()" class="undo-redo-button display-none no-print show-hide"
+            title="Print Groups Schedule">G</div>
         <div id="prev" onclick="prev()" class="undo-redo-button display-none no-print show-hide" title="Undo">&larr;
         </div>
         <div id="next" onclick="next()" class="undo-redo-button display-none no-print show-hide" title="Redo">&rarr;
@@ -511,9 +520,14 @@ It is provided as is under "MIT License"
         let draggedElement = null;
         let warehouseColumnIndex = null;
         let hoursLength = null
-        let tmimataArray = []
+        let groupsArray = []
         let noTeacher = false;
         let showFooter = false;
+        let tileWidth = null;
+
+        // NN -> NodeName
+        let NN_DAY = 'Preferred_Day'
+        let NN_HOUR = 'Preferred_Hour'
 
         // add event listener to file element
         document.getElementById('xmlFileInput').addEventListener('change', handleFileSelect, false);
@@ -609,8 +623,8 @@ It is provided as is under "MIT License"
                 // warehouse cells have not
                 // if cell has Day and Hour card is in program. Set values to xml
                 if (span[0].parentElement.getAttribute('day')) {
-                    xmlElement.getElementsByTagName('Preferred_Day')[0].textContent = span[0].parentElement.getAttribute('day')
-                    xmlElement.getElementsByTagName('Preferred_Hour')[0].textContent = span[0].parentElement.getAttribute('hour')
+                    xmlElement.getElementsByTagName(NN_DAY)[0].textContent = span[0].parentElement.getAttribute('day')
+                    xmlElement.getElementsByTagName(NN_HOUR)[0].textContent = span[0].parentElement.getAttribute('hour')
                 } else {
                     // if no Day (warehouse) remove node element from xml
                     xmlElement.parentElement.removeChild(xmlElement);
@@ -644,8 +658,8 @@ It is provided as is under "MIT License"
             // <ConstraintActivityPreferredStartingTime>
             // 	 <Weight_Percentage>100</Weight_Percentage>
             // 	 <Activity_Id>134</Activity_Id>
-            // 	 <Preferred_Day>Πε</Preferred_Day>
-            // 	 <Preferred_Hour>2</Preferred_Hour>
+            // 	 <Preferred_Day>Πε</Preferred_Day>  - after version 7.1.4 <Day>Πε</Day>
+            // 	 <Preferred_Hour>2</Preferred_Hour> - after version 7.1.4 <Hour>Πε</Hour>
             // 	 <Permanently_Locked>false</Permanently_Locked>
             // 	 <Active>true</Active>
             // 	 <Comments></Comments>
@@ -666,12 +680,12 @@ It is provided as is under "MIT License"
                 newElemChild.appendChild(newText)
                 newElem.appendChild(newElemChild)
 
-                newElemChild = xmlDoc.createElement("Preferred_Day");
+                newElemChild = xmlDoc.createElement(NN_DAY);
                 newText = xmlDoc.createTextNode(allSpans[i].parentElement.getAttribute('day'));
                 newElemChild.appendChild(newText)
                 newElem.appendChild(newElemChild)
 
-                newElemChild = xmlDoc.createElement("Preferred_Hour");
+                newElemChild = xmlDoc.createElement(NN_HOUR);
                 newText = xmlDoc.createTextNode(allSpans[i].parentElement.getAttribute('hour'));
                 newElemChild.appendChild(newText)
                 newElem.appendChild(newElemChild)
@@ -744,8 +758,8 @@ It is provided as is under "MIT License"
           <ConstraintActivityPreferredStartingTime>
             <Weight_Percentage>100</Weight_Percentage>
             <Activity_Id>134</Activity_Id>
-            <Preferred_Day>Πε</Preferred_Day>
-            <Preferred_Hour>2</Preferred_Hour>
+            <Preferred_Day>Πε</Preferred_Day>  - after version 7.1.4 <Day>Πε</Day>
+            <Preferred_Hour>2</Preferred_Hour> - after version 7.1.4 <Hour>Πε</Hour>
             <Permanently_Locked>false</Permanently_Locked>
             <Active>true</Active>
             <Comments/>
@@ -756,8 +770,10 @@ It is provided as is under "MIT License"
             xml = xml.replace(/(<ConstraintActivityPreferredStartingTime>)(<)/g, '  $1\n      $2')
             xml = xml.replace(/(<\/Weight_Percentage>)(<)/g, '$1\n      $2')
             xml = xml.replace(/(<\/Activity_Id>)(<)/g, '$1\n      $2')
-            xml = xml.replace(/(<\/Preferred_Day>)(<)/g, '$1\n      $2')
-            xml = xml.replace(/(<\/Preferred_Hour>)(<)/g, '$1\n      $2')
+            let re = new RegExp(String.raw`(<\/${NN_DAY}>)(<)`, "g");
+            xml = xml.replace(re, '$1\n      $2')
+            re = new RegExp(String.raw`(<\/${NN_HOUR}>)(<)`, "g");
+            xml = xml.replace(re, '$1\n      $2')
             xml = xml.replace(/(<\/Permanently_Locked>)(<)/g, '$1\n      $2')
             xml = xml.replace(/(<\/Active>)(<)/g, '$1\n      $2')
             xml = xml.replace(/(<Comments\/>)(<)/g, '$1\n    $2')
@@ -766,6 +782,14 @@ It is provided as is under "MIT License"
         }
 
         function displayXMLContent(xml) {
+
+            // get version of fet. If version is greater from 7.1.3 change NodeName NN_DAY & NN_HOUR
+            const version = parseFloat(xml.getElementsByTagName("fet")[0].getAttribute('version').replace(/(?<=\..*)\./g, ''))
+            if ( version > 7.13){
+                NN_DAY = 'Day'
+                NN_HOUR = 'Hour'
+            }
+
             // read data from xml
             const NumOfDays = xml.getElementsByTagName("Number_of_Days")[0].textContent;
             const NumOfHours = xml.getElementsByTagName("Number_of_Hours")[0].textContent;
@@ -827,7 +851,7 @@ It is provided as is under "MIT License"
             // read Groups
             const tmimata = xml.getElementsByTagName("Group");
             for (let i = 0; i < tmimata.length; i++) {
-                tmimataArray.push(tmimata[i].getElementsByTagName('Name')[0].textContent)
+                groupsArray.push(tmimata[i].getElementsByTagName('Name')[0].textContent)
             }
 
             // read activities
@@ -879,8 +903,8 @@ It is provided as is under "MIT License"
 
             for (let i = 0; i < activitiesStartTimes.length; i++) {
                 const id = activitiesStartTimes[i].getElementsByTagName("Activity_Id")[0].textContent
-                const d = activitiesStartTimes[i].getElementsByTagName("Preferred_Day")[0].textContent
-                const h = activitiesStartTimes[i].getElementsByTagName("Preferred_Hour")[0].textContent
+                const d = activitiesStartTimes[i].getElementsByTagName(NN_DAY)[0].textContent
+                const h = activitiesStartTimes[i].getElementsByTagName(NN_HOUR)[0].textContent
                 const teacherArr = objAct[id].teacher
                 // if teacher present
                 if (teacherArr.length) {
@@ -1073,7 +1097,7 @@ It is provided as is under "MIT License"
                     tmimaSpan.setAttribute("tmima", objAct[index].tmimata);
                     tmimaSpan.setAttribute("row", teachersIndexList[objAct[index].teacher[i]]);
                     tmimaSpan.setAttribute("col", warehouseColumnIndex);
-                    tmimaSpan.innerHTML = '<span class="top-span display-none" style="font-size:6px">' + objAct[index].subject + '</span>' + '<span class="bottom-span">' + objAct[index].tmima + '</span>';
+                    tmimaSpan.innerHTML = '<span class="top-span display-none" style="font-size:0.4rem">' + objAct[index].subject + '</span>' + '<span class="bottom-span">' + objAct[index].tmima + '</span>';
                     tmimaSpan.setAttribute('info', objAct[index].tmima + " - " + objAct[index].duration + '/' + objAct[index].totalDuration + "\n" + objAct[index].subject + "\n" + objAct[index].teacherStr)
                     tmimaSpan.draggable = true;
                     if (showColors) tmimaSpan.style.background = teachersColor[objAct[index].teacher[i]]
@@ -1528,7 +1552,7 @@ It is provided as is under "MIT License"
             // find missing groups for every column
             for (i = 1; i < table.tBodies[0].rows[0].cells.length - 1; i++) {
                 // start with full group array for every column
-                let colTmimataArray = tmimataArray
+                let colGroupsArray = groupsArray
                 // at every row
                 for (j = 0; j < table.tBodies[0].rows.length; j++) {
                     // get group
@@ -1536,21 +1560,21 @@ It is provided as is under "MIT License"
                     // if group present i remove it from array
                     if (toRemove) {
                         toRemove = toRemove.split(',')
-                        colTmimataArray = colTmimataArray.filter((el) => !toRemove.includes(el));
+                        colGroupsArray = colGroupsArray.filter((el) => !toRemove.includes(el));
                     }
 
                 }
 
                 // if groups left in array set thead and tfoot to inform user
-                if (colTmimataArray.length) {
+                if (colGroupsArray.length) {
                     if (showFooter) {
                         table.tHead.rows[1].cells[i - 1].style.background = '#eeeeee'
-                        table.tHead.rows[1].cells[i - 1].setAttribute('info', 'groups with no activity\n' + colTmimataArray)
+                        table.tHead.rows[1].cells[i - 1].setAttribute('info', 'groups with no activity\n' + colGroupsArray)
                     } else {
                         table.tHead.rows[1].cells[i - 1].style.background = ''
                         table.tHead.rows[1].cells[i - 1].setAttribute('info', '')
                     }
-                    table.tFoot.rows[0].cells[i].textContent = colTmimataArray
+                    table.tFoot.rows[0].cells[i].textContent = colGroupsArray
                 } else {
                     table.tHead.rows[1].cells[i - 1].style.background = ''
                     table.tHead.rows[1].cells[i - 1].setAttribute('info', '')
@@ -1796,9 +1820,8 @@ It is provided as is under "MIT License"
 
         function setTitle() {
             let title = prompt('Input title to be printed', document.getElementById('title').textContent)
-            if (!title.trim()) {
-                return
-            }
+            if (title == null) return
+            if (!title.trim()) return
             document.getElementById('title').textContent = title.trim();
         }
 
@@ -1840,12 +1863,12 @@ It is provided as is under "MIT License"
                     // make them visible and vertcal align bottom
                     el.classList.remove('display-none')
                     el.classList.add('display-block')
-                    el.parentElement.parentElement.style.verticalAlign = 'bottom'
+                    //el.parentElement.parentElement.style.verticalAlign = 'bottom'
                 } else {
                     // make them invisible and vertcal align middle
                     el.classList.remove('display-block')
                     el.classList.add('display-none')
-                    el.parentElement.parentElement.style.verticalAlign = 'middle'
+                    //el.parentElement.parentElement.style.verticalAlign = 'middle'
                 }
             })
 
@@ -1896,6 +1919,333 @@ It is provided as is under "MIT License"
 
         // clear session 
         window.onbeforeunload = () => sessionStorage.clear()
+
+        function createSampleTable() {
+
+            // create new sampleTable structure
+            const sampleTable = document.createElement("table");
+            // add class to easy access later
+            sampleTable.classList.add('print-table')
+
+            const header = document.getElementById("programTable").tHead.cloneNode(true)
+            const days = Array.from(header.firstChild.children).slice(1, header.firstChild.children.length)
+            const hours = Array.from(header.lastChild.children).slice(0, hoursLength)
+            // create thead and add row and cells with hour names
+            const head = sampleTable.appendChild(document.createElement('thead'))
+            const row = head.insertRow()
+            hours.forEach(h => {
+                const cell = row.appendChild(h)
+                cell.removeAttribute('style')
+                cell.innerText = cell.title
+            })
+            // create tbody add rows and first cell with day names
+            sampleTable.appendChild(document.createElement('tbody'))
+            days.forEach(d => {
+                const row = sampleTable.tBodies[0].insertRow()
+                const cell = row.appendChild(d)
+                cell.removeAttribute('style')
+                cell.removeAttribute('colSpan')
+                //cell.title = 'Do not print'
+            })
+            return sampleTable
+        }
+
+        // show and print schedule per teacher
+        function printTeachersSchedule() {
+            // get access to programTable
+            const table = document.getElementById("programTable");
+            // if table is not visible we make it visible
+            if (table.classList.contains('display-none')) {
+                table.classList.remove('display-none')
+                // set buttons visible
+                document.getElementById('printTeachers').title = 'Print Teachers Schedule'
+                document.getElementById('printGroups').classList.remove('display-none')
+                document.getElementById('printGroups').classList.add('display-inline-block')
+                document.getElementById('toggleFooter').classList.remove('display-none')
+                document.getElementById('toggleFooter').classList.add('display-inline-block')
+                document.getElementById('prev').classList.remove('display-none')
+                document.getElementById('prev').classList.add('display-inline-block')
+                document.getElementById('next').classList.remove('display-none')
+                document.getElementById('next').classList.add('display-inline-block')
+                // remove all printTeacher tables
+                const printTeacherTables = Array.from(document.querySelectorAll(`.print-table`))
+                printTeacherTables.forEach(t => {
+                    table.parentElement.removeChild(t)
+                })
+                // set css var --tile-width to default value
+                document.documentElement.style.setProperty('--tile-width', tileWidth);
+                // exit
+                return
+            }
+            // table is visible. We make it invisible
+            table.classList.add('display-none')
+            // set buttons invisible
+            document.getElementById('printTeachers').title = 'Back'
+            document.getElementById('printGroups').classList.remove('display-inline-block')
+            document.getElementById('printGroups').classList.add('display-none')
+            document.getElementById('toggleFooter').classList.remove('display-inline-block')
+            document.getElementById('toggleFooter').classList.add('display-none')
+            document.getElementById('prev').classList.remove('display-inline-block')
+            document.getElementById('prev').classList.add('display-none')
+            document.getElementById('next').classList.remove('display-inline-block')
+            document.getElementById('next').classList.add('display-none')
+
+            // save original value of css var --tile-width to variable
+            tileWidth = window.getComputedStyle(document.body).getPropertyValue('--tile-width')
+            // calculate labelWidth
+            const labelWidth = parseInt(tileWidth) * 5 + 'px'
+
+            // get sampleTable
+            tableTeachers = createSampleTable()
+
+            //get all rows of programTable
+            const tableRows = Array.from(table.tBodies[0].rows)
+            // loop to create table for each teacher row
+            tableRows.forEach(tr => {
+                // get all cells of current row of programTable
+                const tableRowCells = Array.from(tr.cells)
+
+                // clone tableTeachers
+                const newTable = tableTeachers.cloneNode(true)
+
+                // insert first cell with name of teacher
+                newTable.tHead.rows[0].insertBefore(tableRowCells[0].cloneNode(true), newTable.tHead.rows[0].firstChild)
+                // set style and eventListener to first cell
+                const cell = newTable.tHead.rows[0].cells[0]
+                cell.removeAttribute('style')
+                cell.style.fontWeight = 'bold'
+                cell.style.minWidth = labelWidth
+                cell.style.maxWidth = labelWidth
+                cell.title = "Do not print"
+                cell.style.cursor = 'pointer'
+                cell.style.background = '#f5fbff'
+                cell.style.color = '#11496e'
+                cell.addEventListener('click', () => tableNotPrint(newTable))
+
+                // remove first and last cell
+                tableRowCells.shift()
+                tableRowCells.pop()
+                // loop tableRowCells and put them in correct row
+                tableRowCells.forEach((trc, ind) => {
+                    // row = ABS of division index ind / hoursLength
+                    const rowInd = parseInt(ind / hoursLength)
+                    // append cell to exact row
+                    const cell = newTable.tBodies[0].rows[rowInd].appendChild(trc.cloneNode(true))
+                    cell.removeAttribute('style')
+                })
+
+                // get fisrt column cells with day names
+                // add classList to access them later and eventlistener to show-hide row when printing
+                const rows = Array.from(newTable.tBodies[0].rows)
+                rows.forEach(r => {
+                    r.cells[0].classList.add('day-print-noprint')
+                    r.cells[0].addEventListener('click', () => daysPrintNoprint(r.cells[0].getAttribute('index')))
+                })
+
+                // add table to DOM
+                table.parentElement.appendChild(newTable)
+            })
+
+            markBorder()
+            // set --tile-width for new tables to x3
+            const newTileWidth = parseInt(tileWidth) * 3
+            document.documentElement.style.setProperty('--tile-width', newTileWidth + 'px');
+        }
+
+        // swaps print-noprint for specific table
+        function tableNotPrint(table) {
+
+            if (table.tHead.rows[0].cells[0].classList.contains('strike')) {
+                table.classList.remove('no-print')
+                table.tHead.rows[0].cells[0].classList.remove('strike')
+                table.tHead.rows[0].cells[0].title = 'Do not print'
+            } else {
+                table.classList.add('no-print')
+                table.tHead.rows[0].cells[0].classList.add('strike')
+                table.tHead.rows[0].cells[0].title = 'Do print'
+            }
+        }
+
+        function daysPrintNoprint(index) {
+            // get all days of printTeacherTables
+            const days = Array.from(document.querySelectorAll(`.day-print-noprint`))
+            days.forEach(d => {
+                // if index is different continue to next
+                if (d.getAttribute('index') !== index) return
+                // toggle print - no-print
+                if (d.classList.contains('strike')) {
+                    d.classList.remove('strike')
+                    d.title = 'Do not print'
+                    d.parentElement.classList.remove('no-print')
+                } else {
+                    d.classList.add('strike')
+                    d.title = 'Do print'
+                    d.parentElement.classList.add('no-print')
+                }
+            })
+
+        }
+
+        function printGroupsSchedule() {
+            // get access to programTable
+            const table = document.getElementById("programTable");
+            // if table is not visible we make it visible
+            if (table.classList.contains('display-none')) {
+                table.classList.remove('display-none')
+                // set buttons visible
+                document.getElementById('printGroups').title = "Print Groups Schedule"
+                document.getElementById('printTeachers').classList.remove('display-none')
+                document.getElementById('printTeachers').classList.add('display-inline-block')
+                document.getElementById('toggleFooter').classList.remove('display-none')
+                document.getElementById('toggleFooter').classList.add('display-inline-block')
+                document.getElementById('prev').classList.remove('display-none')
+                document.getElementById('prev').classList.add('display-inline-block')
+                document.getElementById('next').classList.remove('display-none')
+                document.getElementById('next').classList.add('display-inline-block')
+                // remove all printTeacher tables
+                const printTeacherTables = Array.from(document.querySelectorAll(`.print-table`))
+                printTeacherTables.forEach(t => {
+                    table.parentElement.removeChild(t)
+                })
+                // set css var --tile-width to default value
+                document.documentElement.style.setProperty('--tile-width', tileWidth);
+                // exit
+                return
+            }
+            // table is visible. We make it invisible
+            table.classList.add('display-none')
+            // set buttons invisible
+            document.getElementById('printGroups').title = 'Back'
+            document.getElementById('printTeachers').classList.remove('display-inline-block')
+            document.getElementById('printTeachers').classList.add('display-none')
+            document.getElementById('toggleFooter').classList.remove('display-inline-block')
+            document.getElementById('toggleFooter').classList.add('display-none')
+            document.getElementById('prev').classList.remove('display-inline-block')
+            document.getElementById('prev').classList.add('display-none')
+            document.getElementById('next').classList.remove('display-inline-block')
+            document.getElementById('next').classList.add('display-none')
+
+            // save original value of css var --tile-width to variable
+            tileWidth = window.getComputedStyle(document.body).getPropertyValue('--tile-width')
+            // calculate labelWidth
+            const labelWidth = parseInt(tileWidth) * 3 + 'px' // !!! for a reason i dont know it does not work
+
+
+
+            // get all cards
+            const allSpans = Array.from(document.querySelectorAll(`.drag-span`))
+            // we copy the groupsArray and add all other groups in cards
+            // finaly we keep only one unique value in arrGroups
+            //let arrGroups = groupsArray
+            let arrGroups = []
+            let uniqueArrGroups = []
+
+            allSpans.forEach(sp => {
+                // add every group - groups to arrGroups
+                arrGroups = arrGroups.concat(sp.getAttribute('tmima').split(','))
+            })
+
+            // keep value only once ( unique)
+            arrGroups.forEach( el => {
+                    if( ! uniqueArrGroups.includes(el)){
+                        uniqueArrGroups.push(el)
+                    }
+                })
+            
+            // sort uniqueArrGroups
+            sortedUniqueArrGroups = uniqueArrGroups.sort()
+
+
+            // get sampleTable
+            tableYears = createSampleTable()
+
+            // loop to create table for each group
+            sortedUniqueArrGroups.forEach(tm => {
+                // clone tableYears
+                const newTable = tableYears.cloneNode(true)
+                newTable.id = 'tbl@' + tm
+
+                // insert first cell with name of Group
+                const newCell = document.createElement('td')
+                newTable.tHead.rows[0].insertBefore(newCell, newTable.tHead.rows[0].firstChild)
+                // set innerText, style and eventListener to first cell
+                const cell = newTable.tHead.rows[0].cells[0]
+                cell.innerText = tm
+                cell.classList.add('mark-border')
+                cell.style.fontWeight = 'bold'
+                cell.style.minWidth = labelWidth
+                cell.style.maxWidth = labelWidth
+                cell.title = "Do not print"
+                cell.style.cursor = 'pointer'
+                cell.style.background = '#f5fbff'
+                cell.style.color = '#11496e'
+                cell.style.textAlign = 'center'
+                cell.addEventListener('click', () => tableNotPrint(newTable))
+
+                // create other cells of table
+                const rows = Array.from(newTable.tBodies[0].rows)
+                rows.forEach(r => {
+                    r.cells[0].classList.add('day-print-noprint')
+                    r.cells[0].addEventListener('click', () => daysPrintNoprint(r.cells[0].getAttribute('index')))
+                    r.cells[0].style.minWidth = labelWidth
+                    r.cells[0].style.maxWidth = labelWidth
+                    for (i = 0; i < hoursLength; i++) {
+                        const cell = r.insertCell()
+                        cell.classList.add('program')
+                        if (i == hoursLength - 1) cell.classList.add('mark-border')
+                    }
+                })
+
+                // add table to DOM
+                table.parentElement.appendChild(newTable)
+            })
+
+            // add cards to group tables
+            allSpans.forEach(sp => {
+
+                // clone to newCard
+                const newSp = sp.cloneNode(true)
+
+                // get column of card
+                const col = newSp.getAttribute('col')
+                
+                // if card is in warehouse continue to next
+                if (col == warehouseColumnIndex) return
+
+                // set data to card spans
+                const info = newSp.getAttribute('info').split('\n')
+                newSp.firstChild.innerText = info[info.length - 1].replace(' - ', '\n')
+                newSp.firstChild.classList.remove('display-none')
+                 newSp.lastChild.innerText = info[1]
+                newSp.firstChild.style.fontSize = 'x-small'
+                newSp.lastChild.style.fontSize = 'small'
+
+                // calculate cell to put card
+                // row index = ABS of division index ind / hoursLength
+                const rowInd = parseInt((col - 1) / hoursLength)
+                // cell index = mod of division index ind / hoursLength
+                const cellInd = parseInt((col - 1) % hoursLength)
+
+                // if two groups join to a subject i put subject to every group
+                const arrTableId = newSp.getAttribute('tmima').split(',')
+                arrTableId.forEach(tm => {
+                    if(! document.getElementById('tbl@' + tm) ) {
+                        console.log('missing index: ', 'tbl@' + tm)
+                        return
+                    }
+                    // append cell to exact row
+                    // if two teachers are in subject i append card only once
+                    if (!document.getElementById('tbl@' + tm).tBodies[0].rows[rowInd].cells[cellInd + 1].children.length) {
+                        document.getElementById('tbl@' + tm).tBodies[0].rows[rowInd].cells[cellInd + 1].appendChild(newSp.cloneNode(true))
+                    }
+                })
+            })
+
+            markBorder()
+            // set --tile-width for new tables to x5
+            const newTileWidth = parseInt(tileWidth) * 5
+            document.documentElement.style.setProperty('--tile-width', newTileWidth + 'px');
+        }
 
     </script>
 
