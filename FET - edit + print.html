@@ -8,6 +8,7 @@ It is provided as is under "MIT License"
     https://opensource.org/license/mit
 
 -->
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -492,6 +493,7 @@ It is provided as is under "MIT License"
 
         const showColors = true
         const spotExpellDuration = 7000
+        const excludeInactiveActivities = true
 
         // removes lightgreen background of row and green background of cells
         const removeBackground = (cell) => {
@@ -610,7 +612,6 @@ It is provided as is under "MIT License"
                 xmlElement = ConstraintActivityPreferredStartingTime.snapshotItem(i)
                 // get Activity_Id and find spans with the same id
                 const id = xmlElement.getElementsByTagName('Activity_Id')[0].textContent
-                //const span = Array.from(document.querySelectorAll(`span[id="${id}"]`))
                 const span = allSpans.filter(sp => sp.id == id)
 
                 // cards with same id might be 1 or 2 ( 2 when are 2 teacher at a class)
@@ -618,6 +619,11 @@ It is provided as is under "MIT License"
                 for (j = 0; j < span.length; j++) {
                     allSpans.splice(allSpans.indexOf(span[j]), 1)
                 }
+
+                // in case of Activities with Active = false that we don't load
+                // might be ConstraintActivityPreferredStartingTime but no card
+                // so if no span[0] bypass
+                if (!span[0]) continue
 
                 // every cell (span.parenElement) has attributes of Day and Hour
                 // warehouse cells have not
@@ -785,7 +791,7 @@ It is provided as is under "MIT License"
 
             // get version of fet. If version is greater from 7.1.3 change NodeName NN_DAY & NN_HOUR
             const version = parseFloat(xml.getElementsByTagName("fet")[0].getAttribute('version').replace(/(?<=\..*)\./g, ''))
-            if ( version > 7.13){
+            if (version > 7.13) {
                 NN_DAY = 'Day'
                 NN_HOUR = 'Hour'
             }
@@ -848,17 +854,20 @@ It is provided as is under "MIT License"
                 }
             }
 
-            // read Groups
-            const tmimata = xml.getElementsByTagName("Group");
-            for (let i = 0; i < tmimata.length; i++) {
-                groupsArray.push(tmimata[i].getElementsByTagName('Name')[0].textContent)
-            }
-
             // read activities
+            // read STUDENTS from ACTIVITIES so i don't care if students come FROM YEAR or GROUP or SUBGROUP
             const activities = xml.getElementsByTagName("Activity");
             const objAct = {}
 
             for (let i = 0; i < activities.length; i++) {
+
+                // const excludeInactiveActivities is set in line 495
+                // if true we dont import inactive activities
+                if (excludeInactiveActivities) {
+                    // if activity Active = false bypass
+                    if (activities[i].getElementsByTagName("Active")[0].textContent !== 'true') continue
+                }
+
                 // teachers might be one or two so i make an array of them
                 const teachers = activities[i].getElementsByTagName("Teacher")
                 let teacherArray = []
@@ -875,6 +884,9 @@ It is provided as is under "MIT License"
                     tmimaArray.push(tmimata[j].textContent)
                 }
                 const tmima = tmimaArray.join(' ')
+
+                // read groups of Students in activities and create array of them
+                groupsArray = groupsArray.concat(tmimaArray)
 
                 const duration = activities[i].getElementsByTagName("Duration")[0].textContent
                 const totalDuration = activities[i].getElementsByTagName("Total_Duration")[0].textContent
@@ -897,12 +909,31 @@ It is provided as is under "MIT License"
                 teachersIndexList['notAv'] = Object.keys(teachersIndexList).length + 2
             }
 
+            // keep values of groupsArray only once ( unique)
+            let uniqueArrGroups = []
+            groupsArray.forEach(el => {
+                if (!uniqueArrGroups.includes(el)) {
+                    uniqueArrGroups.push(el)
+                }
+            })
+            // final groupsArray = sorted uniqueArrGroups
+            groupsArray = uniqueArrGroups.sort()
+
             // read activities start times
             const activitiesStartTimes = xml.getElementsByTagName("ConstraintActivityPreferredStartingTime");
             const objActivitiesStartTimes = []
 
             for (let i = 0; i < activitiesStartTimes.length; i++) {
+
+                // load only "Active = true" ConstraintActivityPreferredStartingTime
+                if (activitiesStartTimes[i].getElementsByTagName("Active")[0].textContent == "false") continue
+
                 const id = activitiesStartTimes[i].getElementsByTagName("Activity_Id")[0].textContent
+
+                // if activity Active = false is bypassed and there is no id
+                // so we don,t add the card
+                if (!objAct[id]) continue
+
                 const d = activitiesStartTimes[i].getElementsByTagName(NN_DAY)[0].textContent
                 const h = activitiesStartTimes[i].getElementsByTagName(NN_HOUR)[0].textContent
                 const teacherArr = objAct[id].teacher
@@ -1174,7 +1205,6 @@ It is provided as is under "MIT License"
             markBorder()
             findMissingTmimata()
         }
-
 
         // saves table to sessionStorage
         function saveTable(table) {
@@ -2047,8 +2077,8 @@ It is provided as is under "MIT License"
             })
 
             markBorder()
-            // set --tile-width for new tables to x3
-            const newTileWidth = parseInt(tileWidth) * 3
+            // set --tile-width for new tables to x4
+            const newTileWidth = parseInt(tileWidth) * 4
             document.documentElement.style.setProperty('--tile-width', newTileWidth + 'px');
         }
 
@@ -2130,37 +2160,11 @@ It is provided as is under "MIT License"
             // calculate labelWidth
             const labelWidth = parseInt(tileWidth) * 3 + 'px' // !!! for a reason i dont know it does not work
 
-
-
-            // get all cards
-            const allSpans = Array.from(document.querySelectorAll(`.drag-span`))
-            // we copy the groupsArray and add all other groups in cards
-            // finaly we keep only one unique value in arrGroups
-            //let arrGroups = groupsArray
-            let arrGroups = []
-            let uniqueArrGroups = []
-
-            allSpans.forEach(sp => {
-                // add every group - groups to arrGroups
-                arrGroups = arrGroups.concat(sp.getAttribute('tmima').split(','))
-            })
-
-            // keep value only once ( unique)
-            arrGroups.forEach( el => {
-                    if( ! uniqueArrGroups.includes(el)){
-                        uniqueArrGroups.push(el)
-                    }
-                })
-            
-            // sort uniqueArrGroups
-            sortedUniqueArrGroups = uniqueArrGroups.sort()
-
-
-            // get sampleTable
             tableYears = createSampleTable()
 
             // loop to create table for each group
-            sortedUniqueArrGroups.forEach(tm => {
+            //sortedUniqueArrGroups.forEach(tm => {
+            groupsArray.forEach(tm => {
                 // clone tableYears
                 const newTable = tableYears.cloneNode(true)
                 newTable.id = 'tbl@' + tm
@@ -2200,6 +2204,8 @@ It is provided as is under "MIT License"
                 table.parentElement.appendChild(newTable)
             })
 
+            // get all cards
+            const allSpans = Array.from(document.querySelectorAll(`.drag-span`))
             // add cards to group tables
             allSpans.forEach(sp => {
 
@@ -2208,7 +2214,7 @@ It is provided as is under "MIT License"
 
                 // get column of card
                 const col = newSp.getAttribute('col')
-                
+
                 // if card is in warehouse continue to next
                 if (col == warehouseColumnIndex) return
 
@@ -2216,7 +2222,7 @@ It is provided as is under "MIT License"
                 const info = newSp.getAttribute('info').split('\n')
                 newSp.firstChild.innerText = info[info.length - 1].replace(' - ', '\n')
                 newSp.firstChild.classList.remove('display-none')
-                 newSp.lastChild.innerText = info[1]
+                newSp.lastChild.innerText = info[1]
                 newSp.firstChild.style.fontSize = 'x-small'
                 newSp.lastChild.style.fontSize = 'small'
 
@@ -2229,7 +2235,7 @@ It is provided as is under "MIT License"
                 // if two groups join to a subject i put subject to every group
                 const arrTableId = newSp.getAttribute('tmima').split(',')
                 arrTableId.forEach(tm => {
-                    if(! document.getElementById('tbl@' + tm) ) {
+                    if (!document.getElementById('tbl@' + tm)) {
                         console.log('missing index: ', 'tbl@' + tm)
                         return
                     }
