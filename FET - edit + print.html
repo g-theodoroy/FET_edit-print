@@ -1402,8 +1402,8 @@ It is provided as is under "MIT License"
                     if (newCell.id) {
                         const existingElements = Array.from(document.querySelectorAll(`span[id="${newCell.id}"]`))
                         existingElements.forEach(el => {
-                            const apo = +el.parentElement.getAttribute('hour') + +el.parentElement.getAttribute('start')
-                            const eos = +el.parentElement.getAttribute('hour') + +el.parentElement.getAttribute('stop')
+                            const apo = +el.getAttribute('hour').replace(/[^0-9]/g, "") + +el.getAttribute('start')
+                            const eos = +el.getAttribute('hour').replace(/[^0-9]/g, "") + +el.getAttribute('stop')
                             const oraStr = apo == eos ? apo + ' hour' : apo + '-' + eos + ' hours';
                             message.push('\n' + el.parentElement.parentElement.cells[0].textContent + '      ' + oraStr + '      ' + el.getAttribute('tmima').replace(",", " "))
                         })
