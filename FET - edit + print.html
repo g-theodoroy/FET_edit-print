@@ -21,13 +21,16 @@ It is provided as is under "MIT License"
             --tile-width: 30px;
             --padding: 0.75px;
             --margin: 0.75px;
-            --font-size: 16px
+            --font-size: 16px;
+            --body-y-margin: 30px;
         }
 
         body {
             font-family: Arial, sans-serif;
             font-size: var(--font-size);
             font-weight: normal;
+            margin-top: var(--body-y-margin);
+            margin-bottom: var(--body-y-margin);
         }
 
         .container {
@@ -409,7 +412,10 @@ It is provided as is under "MIT License"
         <div id="toggleFooter" onclick="toggleFooterVisible()" class="undo-redo-button display-none no-print show-hide"
             title="Toggle footer visible">&oplus;</div>
         <div id="showSubject" class="undo-redo-button display-none no-print show-hide"
-            title="Show/Hide subject&#10;Click left - right&#10;to set font size">&ctdot;
+            title="Show/Hide subject&#10;Click left - right&#10;to set font size">&nbsp;&ctdot;&nbsp;
+        </div>
+        <div id="setTileWidth" onclick="setTileWidth()" class="undo-redo-button display-none no-print show-hide"
+            title="Set width of cards">&harr;
         </div>
         <div id="setTitle" onclick="setTitle()" class="undo-redo-button display-none no-print show-hide"
             title="Set title">&#9997;</div>
@@ -505,13 +511,24 @@ It is provided as is under "MIT License"
         // sets lightgreen background to teacher row 
         // sets green background to cells where student-class is missing
         const setBackgroundGreen = (cell) => {
-            draggedElement.parentElement.parentElement.parentElement.rows[draggedElement.getAttribute('row') - 2].style.background = '#cfffd7'
+            const table = document.getElementById('programTable')
+            const theRow = draggedElement.getAttribute('row') - 2
+
             const dragElTmima = draggedElement.getAttribute('tmima')
-            const possiblePositions = Array.from(draggedElement.parentElement.parentElement.parentElement.parentElement.tFoot.rows[0].cells).filter(c => c.innerText !== '')
+            const dragElRoom = draggedElement.getAttribute('room')
+
+            table.tBodies[0].rows[theRow].style.background = '#cfffd7'
+
+            // find possible positions from missing groups stored in footer cell
+            const possiblePositions = Array.from(table.tFoot.rows[0].cells).filter(c => c.innerText !== '')
             possiblePositions.forEach(p => {
                 if (p.innerText.includes(dragElTmima)) {
-                    if (p.parentElement.parentElement.parentElement.tBodies[0].rows[draggedElement.getAttribute('row') - 2].cells[p.cellIndex].classList.contains('not-av')) { return }
-                    p.parentElement.parentElement.parentElement.tBodies[0].rows[draggedElement.getAttribute('row') - 2].cells[p.cellIndex].style.background = 'green'
+                    // if cell marked not-availiable for teacher continue
+                    if (table.tBodies[0].rows[theRow].cells[p.cellIndex].classList.contains('not-av')) { return }
+                    // if room of dragged element is occupied by other group continue
+                    if (dragElRoom && table.tFoot.rows[0].cells[p.cellIndex].getAttribute('rooms').split(',').includes(dragElRoom)) { return }
+                    // all free (group and room). Mark green 
+                    table.tBodies[0].rows[theRow].cells[p.cellIndex].style.background = 'green'
                 }
             })
         }
@@ -523,9 +540,12 @@ It is provided as is under "MIT License"
         let warehouseColumnIndex = null;
         let hoursLength = null
         let groupsArray = []
+        let xmlGroupsArray = []
+        let subgroupsArray = []
         let noTeacher = false;
         let showFooter = false;
         let tileWidth = null;
+        let initFontSize = '0.4rem';
 
         // NN -> NodeName
         let NN_DAY = 'Preferred_Day'
@@ -854,6 +874,33 @@ It is provided as is under "MIT License"
                 }
             }
 
+
+            // read Croups from fet file
+            // create array of Subgroups for each Group
+            const xmlGroups = xml.getElementsByTagName("Group");
+            for (let i = 0; i < xmlGroups.length; i++) {
+                const subgroup = xmlGroups[i].getElementsByTagName("Subgroup")
+                const dummyArr = []
+                for (let y = 0; y < subgroup.length; y++) {
+                    dummyArr.push(subgroup[y].getElementsByTagName("Name")[0].textContent)
+                }
+                if (dummyArr.length) {
+                    xmlGroupsArray[xmlGroups[i].getElementsByTagName("Name")[0].textContent] = dummyArr
+                }
+            }
+
+
+            // read Subroups
+            // create array of each Subgroup with its parent Group
+            const subgroups = xml.getElementsByTagName("Subgroup");
+            for (let i = 0; i < subgroups.length; i++) {
+                subgroupsArray[subgroups[i].getElementsByTagName("Name")[0].textContent] = [
+                    subgroups[i].getElementsByTagName("Name")[0].textContent,
+                    subgroups[i].parentElement.getElementsByTagName("Name")[0].textContent
+                ]
+            }
+
+
             // read activities
             // read STUDENTS from ACTIVITIES so i don't care if students come FROM YEAR or GROUP or SUBGROUP
             const activities = xml.getElementsByTagName("Activity");
@@ -966,6 +1013,27 @@ It is provided as is under "MIT License"
                 }
             }
 
+
+            // read activities rooms
+
+            const activitiesRooms = xml.getElementsByTagName("ConstraintActivityPreferredRoom");
+            const objActivitiesRooms = []
+
+            for (let i = 0; i < activitiesRooms.length; i++) {
+
+                // load only "Active = true" ConstraintActivityPreferredStartingTime
+                if (activitiesRooms[i].getElementsByTagName("Active")[0].textContent == "false") continue
+
+                const id = activitiesRooms[i].getElementsByTagName("Activity_Id")[0].textContent
+
+                // if activity Active = false is bypassed and there is no id
+                // so we don,t add the card
+                if (!objAct[id]) continue
+
+                objActivitiesRooms[id] = activitiesRooms[i].getElementsByTagName("Room")[0].textContent
+
+            }
+
             // -------- create table ------------
             const table = document.getElementById("programTable");
             const thead = table.tHead
@@ -975,6 +1043,7 @@ It is provided as is under "MIT License"
             let row = tfoot.insertRow()
             for (i = 0; i < tableColNum; i++) {
                 let cell = row.insertCell()
+                cell.setAttribute('col', i)
                 cell.classList.add('footer', 'no-print', 'display-none')
             }
 
@@ -1036,6 +1105,9 @@ It is provided as is under "MIT License"
                 cell.textContent = Object.keys(teachersIndexList)[i] == 'notAv' ? '' : Object.keys(teachersIndexList)[i]
                 cell.classList.add('text-small')
                 cell.classList.add('mark-border')
+                cell.classList.add('teacher-name')
+                cell.title = "Do not print"
+                cell.style.cursor = 'pointer'
                 // cells of schedule
                 for (let j = 0; j < days.length; j++) {
                     for (let k = 0; k < hours.length; k++) {
@@ -1074,14 +1146,16 @@ It is provided as is under "MIT License"
                 delete objAct[objActivitiesStartTimes[i].id]
 
                 // create the cards (spans)
-                var tmimaSpan = document.createElement("span");
+                const tmimaSpan = document.createElement("span");
                 tmimaSpan.setAttribute("class", "drag-span display-inline-block");
                 tmimaSpan.id = objActivitiesStartTimes[i].id;
+                tmimaSpan.setAttribute("teacher", objActivitiesStartTimes[i].data.teacherStr);
                 tmimaSpan.setAttribute("tmima", objActivitiesStartTimes[i].data.tmimata);
+                objActivitiesRooms[tmimaSpan.id] ? tmimaSpan.setAttribute("room", objActivitiesRooms[tmimaSpan.id]) : false
                 tmimaSpan.setAttribute("row", row.rowIndex);
                 tmimaSpan.setAttribute("col", cell.cellIndex);
-                tmimaSpan.innerHTML = '<span class="top-span display-none" style="font-size:0.4rem">' + objActivitiesStartTimes[i].data.subject + '</span>' + '<span class="bottom-span">' + objActivitiesStartTimes[i].data.tmima + '</span>';
-                tmimaSpan.setAttribute('info', objActivitiesStartTimes[i].data.tmima + " - " + objActivitiesStartTimes[i].data.duration + '/' + objActivitiesStartTimes[i].data.totalDuration + "\n" + objActivitiesStartTimes[i].data.subject + "\n" + objActivitiesStartTimes[i].data.teacherStr)
+                tmimaSpan.innerHTML = `<span class="top-span display-none" style="font-size:${initFontSize}">` + objActivitiesStartTimes[i].data.subject + '</span>' + '<span class="bottom-span">' + objActivitiesStartTimes[i].data.tmima + '</span>' + `<span class="top-span display-none" style="font-size:${initFontSize}">` + (objActivitiesRooms[tmimaSpan.id] ? "\n" + objActivitiesRooms[tmimaSpan.id] : '');
+                tmimaSpan.setAttribute('info', objActivitiesStartTimes[i].data.tmima + " - " + objActivitiesStartTimes[i].data.duration + '/' + objActivitiesStartTimes[i].data.totalDuration + "\n" + objActivitiesStartTimes[i].data.subject + "\n" + objActivitiesStartTimes[i].data.teacherStr + (objActivitiesRooms[tmimaSpan.id] ? "\n" + objActivitiesRooms[tmimaSpan.id] : ''))
                 tmimaSpan.draggable = true;
                 if (showColors) tmimaSpan.style.background = objActivitiesStartTimes[i].color
                 // add card to cell
@@ -1089,6 +1163,7 @@ It is provided as is under "MIT License"
                 // set data to cell
                 cell.id = objActivitiesStartTimes[i].id
                 cell.setAttribute('tmima', objActivitiesStartTimes[i].data.tmimata)
+                objActivitiesRooms[tmimaSpan.id] ? cell.setAttribute("room", objActivitiesRooms[tmimaSpan.id]) : false
 
                 // make cards wide to simulate duration
                 // all cards have duration 1
@@ -1109,6 +1184,7 @@ It is provided as is under "MIT License"
                         // cell 3 => start = -2,  stop = 0
                         // that way i know in which cell the card belongs
                         row.cells[index + j].setAttribute('tmima', objActivitiesStartTimes[i].data.tmimata)
+                        if (objActivitiesRooms[tmimaSpan.id]) row.cells[index + j].setAttribute('room', objActivitiesRooms[tmimaSpan.id])
                         row.cells[index + j].setAttribute('start', 0 - j)
                         row.cells[index + j].setAttribute('stop', clspn - 1 - j)
                     }
@@ -1128,7 +1204,7 @@ It is provided as is under "MIT License"
                     tmimaSpan.setAttribute("tmima", objAct[index].tmimata);
                     tmimaSpan.setAttribute("row", teachersIndexList[objAct[index].teacher[i]]);
                     tmimaSpan.setAttribute("col", warehouseColumnIndex);
-                    tmimaSpan.innerHTML = '<span class="top-span display-none" style="font-size:0.4rem">' + objAct[index].subject + '</span>' + '<span class="bottom-span">' + objAct[index].tmima + '</span>';
+                    tmimaSpan.innerHTML = `<span class="top-span display-none" style="font-size:${initFontSize}">` + objAct[index].subject + '</span>' + '<span class="bottom-span">' + objAct[index].tmima + '</span>';
                     tmimaSpan.setAttribute('info', objAct[index].tmima + " - " + objAct[index].duration + '/' + objAct[index].totalDuration + "\n" + objAct[index].subject + "\n" + objAct[index].teacherStr)
                     tmimaSpan.draggable = true;
                     if (showColors) tmimaSpan.style.background = teachersColor[objAct[index].teacher[i]]
@@ -1173,10 +1249,14 @@ It is provided as is under "MIT License"
                 };
             })
 
+            const teacherNameCells = Array.from(document.querySelectorAll(`.teacher-name`))
+            teacherNameCells.forEach(c => {
+                c.addEventListener('click', () => teacherNoPrint(c))
+            })
+
             const dayRowCells = Array.from(document.querySelectorAll(`.day`))
             dayRowCells.forEach(d => {
-                d.addEventListener('click', () => dayNotPrint(d.getAttribute('index')))
-
+                d.addEventListener('click', () => dayNoPrint(d.getAttribute('index')))
             })
 
             const hourColCells = Array.from(document.querySelectorAll(`.hour`))
@@ -1189,7 +1269,6 @@ It is provided as is under "MIT License"
                     document.getElementById('whiteboard').innerText = '';
                     document.getElementById('whiteboard').classList.add('display-none');
                 };
-
             })
 
             // clear backgrounds might be present ( and saved) when table was saved
@@ -1339,11 +1418,25 @@ It is provided as is under "MIT License"
             const tbody = cell.parentElement.parentElement
             const rowsLegth = tbody.rows.length
 
+            const dropHour = cell.getAttribute('hour').replace(/[^0-9]/g, "")
+            const dragHour = draggedElement.parentElement.getAttribute('hour').replace(/[^0-9]/g, "")
+
+
             const dragElId = draggedElement.id
             const dragElTmima = draggedElement.getAttribute('tmima').split(',')
+            const dragElRoom = draggedElement.getAttribute('room')
             const dragElRow = draggedElement.getAttribute('row')
             const dragElCol = draggedElement.getAttribute('col')
             const dragElSize = draggedElement.getAttribute('w')
+            const dragElTeacher = draggedElement.getAttribute('teacher')
+
+            // add subgroups or parent group to affected groups
+            let affectedElTmimata = [...dragElTmima]
+            if (xmlGroupsArray[dragElTmima] !== undefined) affectedElTmimata = [...affectedElTmimata, ...xmlGroupsArray[dragElTmima]]
+            if (subgroupsArray[dragElTmima] !== undefined) affectedElTmimata = [...affectedElTmimata, ...subgroupsArray[dragElTmima]]
+
+            // keep values of affectedElTmimata only once ( unique)
+            affectedElTmimata = Array.from(new Set(affectedElTmimata))
 
             // set card drag status to default
             const spans = Array.from(document.querySelectorAll(`span`))
@@ -1387,10 +1480,10 @@ It is provided as is under "MIT License"
                 if (newCell.id) {
                     const existingElements = Array.from(document.querySelectorAll(`span[id="${newCell.id}"]`))
                     existingElements.forEach(el => {
-                        const apo = +el.parentElement.getAttribute('hour') + +el.parentElement.getAttribute('start')
-                        const eos = +el.parentElement.getAttribute('hour') + +el.parentElement.getAttribute('stop')
-                        const oraStr = apo == eos ? apo + ' hour' : apo + '-' + eos + ' hours';
-                        message.push('\n' + el.parentElement.parentElement.cells[0].textContent + '      ' + oraStr + '      ' + el.getAttribute('tmima').replace(",", " "))
+                        const apo = +el.parentElement.getAttribute('hour').replace(/[^0-9]/g, "") + +el.parentElement.getAttribute('start')
+                        const eos = +el.parentElement.getAttribute('hour').replace(/[^0-9]/g, "") + +el.parentElement.getAttribute('stop')
+                        const oraStr = apo ? apo == eos ? getOrdinal(apo) + ' hour' : getOrdinal(apo) + ' to ' + getOrdinal(eos) + ' hours' : '';
+                        message.push('\n' + (oraStr ? oraStr + '\n' : '') + el.parentElement.parentElement.cells[0].textContent + '\ngroup:    ' + el.getAttribute('tmima') + (el.getAttribute('room') ? '\nroom:     ' + el.getAttribute('room') : '') + '\n')
                     })
                 }
 
@@ -1402,32 +1495,48 @@ It is provided as is under "MIT License"
                     if (newCell.id) {
                         const existingElements = Array.from(document.querySelectorAll(`span[id="${newCell.id}"]`))
                         existingElements.forEach(el => {
-                            const apo = +el.getAttribute('hour').replace(/[^0-9]/g, "") + +el.getAttribute('start')
-                            const eos = +el.getAttribute('hour').replace(/[^0-9]/g, "") + +el.getAttribute('stop')
-                            const oraStr = apo == eos ? apo + ' hour' : apo + '-' + eos + ' hours';
-                            message.push('\n' + el.parentElement.parentElement.cells[0].textContent + '      ' + oraStr + '      ' + el.getAttribute('tmima').replace(",", " "))
+                            const apo = +el.parentElement.getAttribute('hour').replace(/[^0-9]/g, "") + +el.parentElement.getAttribute('start')
+                            const eos = +el.parentElement.getAttribute('hour').replace(/[^0-9]/g, "") + +el.parentElement.getAttribute('stop')
+                            const oraStr = apo ? apo == eos ? getOrdinal(apo) + ' hour' : getOrdinal(apo) + ' to ' + getOrdinal(eos) + ' hours' : '';
+                            message.push('\n' + (oraStr ? oraStr + '\n' : '') + el.parentElement.parentElement.cells[0].textContent + '\ngroup:    ' + el.getAttribute('tmima') + (el.getAttribute('room') ? '\nroom:     ' + el.getAttribute('room') : '') + '\n')
                         })
                     }
                 }
 
             })
 
-            // check all the others cells in affected columns if they have the same students-division
-            dragElTmima.forEach(tm => {
-                const otherCells = Array.from(document.querySelectorAll(`td[tmima*="${tm}"]`))
-                    .filter(el => el.cellIndex >= columnIndex && el.cellIndex < +columnIndex + +dragElSize && el.id !== draggedElement.id)
+            // check all the others cells in affected columns if they have the same students-division or same room
+            //dragElTmima.forEach(tm => {
+            affectedElTmimata.forEach(tm => {
+                // same students-division
+                let otherCells = Array.from(document.querySelectorAll(`td[tmima*="${tm}"]`))
+                    .filter(el => el.cellIndex >= columnIndex)
+                    .filter(el => el.cellIndex < +columnIndex + +dragElSize)
+                    .filter(el => el.id !== draggedElement.id)
+                    //.filter(el => el.id)
+                    .filter(el => el.getAttribute('tmima').split(',').includes(tm));
+
+                // same room
+                const otherRoomCells = Array.from(document.querySelectorAll(`td[room="${dragElRoom}"]`))
+                    .filter(el => el.cellIndex >= columnIndex)
+                    .filter(el => el.cellIndex < +columnIndex + +dragElSize)
+                    .filter(el => el.id !== draggedElement.id)
+                    .filter(el => el.getAttribute('tmima') !== tm);
+
+                // join all together and set unique
+                otherCells = Array.from(new Set([...otherCells, ...otherRoomCells]))
 
                 otherCells.forEach(c => {
-                    if (!c.id) { return }
+
                     const cellsClear = Array.from(document.querySelectorAll(`td[id="${c.id}"]`))
 
                     cellsClear.forEach(el => {
                         // if they contain card the card should be removed
                         if (el.firstChild) {
-                            const apo = +el.getAttribute('hour') + +el.getAttribute('start')
-                            const eos = +el.getAttribute('hour') + +el.getAttribute('stop')
-                            const oraStr = apo == eos ? apo + ' hour' : apo + '-' + eos + ' hours';
-                            message.push('\n' + el.parentElement.cells[0].textContent + '      ' + oraStr + '      ' + el.getAttribute('tmima').replace(",", " "))
+                            const apo = +el.getAttribute('hour').replace(/[^0-9]/g, "") + +el.getAttribute('start')
+                            const eos = +el.getAttribute('hour').replace(/[^0-9]/g, "") + +el.getAttribute('stop')
+                            const oraStr = apo ? apo == eos ? getOrdinal(apo) + ' hour' : getOrdinal(apo) + ' to ' + getOrdinal(eos) + ' hours' : '';
+                            message.push('\n' + (oraStr ? oraStr + '\n' : '') + el.parentElement.cells[0].textContent + '\ngroup:    ' + el.getAttribute('tmima') + (el.getAttribute('room') ? '\nroom:     ' + el.getAttribute('room') : '') + '\n')
                         }
                     })
 
@@ -1436,10 +1545,13 @@ It is provided as is under "MIT License"
             })
             // end of 1st round
 
-            // ask user to confirm
+            // get unique messages of array 
             message = Array.from(new Set(message))
+
+            // ask user to confirm
             if (message.length) {
-                var ok = confirm('Conflicts:\n' + message + '\n\nPlease confirm.')
+                headMessage = `Moved activity\n\n${dragElTeacher}\ngroup:    ${dragElTmima}\n` + (dragElRoom ? `room:     ${dragElRoom}\n` : '') + `\nfrom ${getOrdinal(dragHour)} to ${getOrdinal(dropHour)} hour, conflicts with\n`
+                var ok = confirm(headMessage + message.join("") + '\nPlease confirm substitution.')
                 if (!ok) {
                     removeBackground(draggedElement)
                     return
@@ -1454,6 +1566,7 @@ It is provided as is under "MIT License"
             cellsClear.forEach(el => {
                 el.removeAttribute('id')
                 el.removeAttribute('tmima')
+                el.removeAttribute('room')
                 el.removeAttribute('start')
                 el.removeAttribute('stop')
                 el.classList.add('spot-last-cell');
@@ -1479,6 +1592,7 @@ It is provided as is under "MIT License"
                     existingElementsCells.forEach(exelcell => {
                         exelcell.removeAttribute('id')
                         exelcell.removeAttribute('tmima')
+                        exelcell.removeAttribute('room')
                         exelcell.removeAttribute('start')
                         exelcell.removeAttribute('stop')
                         exelcell.classList.add('spot-expelled');
@@ -1514,6 +1628,7 @@ It is provided as is under "MIT License"
                         existingElementsCells.forEach(exelcell => {
                             exelcell.removeAttribute('id')
                             exelcell.removeAttribute('tmima')
+                            exelcell.removeAttribute('room')
                             exelcell.removeAttribute('start')
                             exelcell.removeAttribute('stop')
                             exelcell.classList.add('spot-expelled');
@@ -1523,6 +1638,7 @@ It is provided as is under "MIT License"
                     // set data attributes to new cells
                     newCell.setAttribute('id', draggedElement.id)
                     newCell.setAttribute('tmima', dragElTmima)
+                    if (dragElRoom) newCell.setAttribute('room', dragElRoom)
                     newCell.setAttribute('start', 0 - i)
                     newCell.setAttribute('stop', dragElSize - 1 - i)
 
@@ -1538,13 +1654,27 @@ It is provided as is under "MIT License"
 
 
             // find all other cells with the same group in columns affected
-            dragElTmima.forEach(tm => {
-                const otherCells = Array.from(document.querySelectorAll(`td[tmima*="${tm}"]`))
-                    .filter(el => el.cellIndex >= columnIndex && el.cellIndex < +columnIndex + +dragElSize && el.id !== draggedElement.id)
+            //dragElTmima.forEach(tm => {
+            affectedElTmimata.forEach(tm => {
+                // same students-division
+                let otherCells = Array.from(document.querySelectorAll(`td[tmima*="${tm}"]`))
+                    .filter(el => el.cellIndex >= columnIndex)
+                    .filter(el => el.cellIndex < +columnIndex + +dragElSize)
+                    .filter(el => el.id !== draggedElement.id)
+                    //.filter(el => el.id)
+                    .filter(el => el.getAttribute('tmima').split(',').includes(tm));
+
+                // same room
+                const otherRoomCells = Array.from(document.querySelectorAll(`td[room="${dragElRoom}"]`))
+                    .filter(el => el.cellIndex >= columnIndex)
+                    .filter(el => el.cellIndex < +columnIndex + +dragElSize)
+                    .filter(el => el.id !== draggedElement.id)
+                    .filter(el => el.getAttribute('tmima') !== tm);
+
+                // join all together and set unique
+                otherCells = Array.from(new Set([...otherCells, ...otherRoomCells]))
 
                 otherCells.forEach(c => {
-                    // have no id -> do nothing
-                    if (!c.id) { return }
 
                     // get all cells with id that belong to previous card
                     const cellsClear = Array.from(document.querySelectorAll(`td[id="${c.id}"]`))
@@ -1558,6 +1688,7 @@ It is provided as is under "MIT License"
                         // clean data attributes
                         el.removeAttribute('id')
                         el.removeAttribute('tmima')
+                        el.removeAttribute('room')
                         el.removeAttribute('start')
                         el.removeAttribute('stop')
                         el.classList.add('spot-expelled');
@@ -1570,7 +1701,7 @@ It is provided as is under "MIT License"
 
             removeBackground(draggedElement)
             clearElement(draggedElement)
-            // end od 2nd round
+            // end of 2nd round
 
             findMissingTmimata()
             saveTable(table)
@@ -1583,17 +1714,58 @@ It is provided as is under "MIT License"
             for (i = 1; i < table.tBodies[0].rows[0].cells.length - 1; i++) {
                 // start with full group array for every column
                 let colGroupsArray = groupsArray
+
+                /* 
+                I DONT NEED THIS NOW. 
+                JUST LEAVE THE CODE IF IS NEEDED IN FUTURE
+
+                // find all groups in current hour
+                let tmimataArr = []
+                */
+
+                // find all rooms occupied in current hour
+                let roomsArr = []
                 // at every row
                 for (j = 0; j < table.tBodies[0].rows.length; j++) {
                     // get group
                     let toRemove = table.tBodies[0].rows[j].cells[i].getAttribute('tmima')
+                    let rooms = table.tBodies[0].rows[j].cells[i].getAttribute('room')
+
                     // if group present i remove it from array
                     if (toRemove) {
+
                         toRemove = toRemove.split(',')
+
+                        /* I DONT NEED THIS NOW 
+                        tmimataArr = [...tmimataArr, ...toRemove]
+                        */
+
+                        // add rooms to array if availiable
+                        if (rooms) roomsArr = [...roomsArr, rooms]
+
                         colGroupsArray = colGroupsArray.filter((el) => !toRemove.includes(el));
+
+                        for (k = 0; k < toRemove.length; k++) {
+                            // if current group is Subgroup i also remove parent Group
+                            if (subgroupsArray[toRemove[k]]) {
+                                colGroupsArray = colGroupsArray.filter((el) => !subgroupsArray[toRemove[k]].includes(el));
+                            }
+                            // if current group has Subgroups i also remove these Subgroups
+                            if (xmlGroupsArray[toRemove[k]]) {
+                                colGroupsArray = colGroupsArray.filter((el) => !xmlGroupsArray[toRemove[k]].includes(el));
+                            }
+                        }
+
                     }
 
                 }
+
+                /* I DONT NEED THIS NOW 
+                table.tFoot.rows[0].cells[i].setAttribute('tmimata', Array.from(new Set(tmimataArr)))
+                */
+
+                // set rooms in footer to check if occupied at current hour
+                table.tFoot.rows[0].cells[i].setAttribute('rooms', Array.from(new Set(roomsArr)))
 
                 // if groups left in array set thead and tfoot to inform user
                 if (colGroupsArray.length) {
@@ -1615,7 +1787,7 @@ It is provided as is under "MIT License"
         }
 
         // swaps print-noprint for specific day
-        function dayNotPrint(day) {
+        function dayNoPrint(day) {
             const table = document.getElementById('programTable')
 
             if (table.tHead.rows[0].cells[day].classList.contains('strike')) {
@@ -1895,9 +2067,10 @@ It is provided as is under "MIT License"
                     el.classList.add('display-block')
                     //el.parentElement.parentElement.style.verticalAlign = 'bottom'
                 } else {
-                    // make them invisible and vertcal align middle
+                    // make them invisible and vertical align middle
                     el.classList.remove('display-block')
                     el.classList.add('display-none')
+                    el.style.fontSize = initFontSize
                     //el.parentElement.parentElement.style.verticalAlign = 'middle'
                 }
             })
@@ -2050,7 +2223,8 @@ It is provided as is under "MIT License"
                 cell.style.cursor = 'pointer'
                 cell.style.background = '#f5fbff'
                 cell.style.color = '#11496e'
-                cell.addEventListener('click', () => tableNotPrint(newTable))
+                cell.addEventListener('click', () => tableNoPrint(newTable))
+                cell.classList.remove('strike')
 
                 // remove first and last cell
                 tableRowCells.shift()
@@ -2082,8 +2256,8 @@ It is provided as is under "MIT License"
             document.documentElement.style.setProperty('--tile-width', newTileWidth + 'px');
         }
 
-        // swaps print-noprint for specific table
-        function tableNotPrint(table) {
+        // swaps print-noprint for specific teacher table
+        function tableNoPrint(table) {
 
             if (table.tHead.rows[0].cells[0].classList.contains('strike')) {
                 table.classList.remove('no-print')
@@ -2093,6 +2267,19 @@ It is provided as is under "MIT License"
                 table.classList.add('no-print')
                 table.tHead.rows[0].cells[0].classList.add('strike')
                 table.tHead.rows[0].cells[0].title = 'Do print'
+            }
+        }
+
+        // swaps print-noprint for teacher row in programtable
+        function teacherNoPrint(cell) {
+            if (cell.classList.contains('strike')) {
+                cell.parentElement.classList.remove('no-print')
+                cell.classList.remove('strike')
+                cell.title = 'Do not print'
+            } else {
+                cell.parentElement.classList.add('no-print')
+                cell.classList.add('strike')
+                cell.title = 'Do print'
             }
         }
 
@@ -2184,7 +2371,7 @@ It is provided as is under "MIT License"
                 cell.style.background = '#f5fbff'
                 cell.style.color = '#11496e'
                 cell.style.textAlign = 'center'
-                cell.addEventListener('click', () => tableNotPrint(newTable))
+                cell.addEventListener('click', () => tableNoPrint(newTable))
 
                 // create other cells of table
                 const rows = Array.from(newTable.tBodies[0].rows)
@@ -2220,11 +2407,12 @@ It is provided as is under "MIT License"
 
                 // set data to card spans
                 const info = newSp.getAttribute('info').split('\n')
-                newSp.firstChild.innerText = info[info.length - 1].replace(' - ', '\n')
+                newSp.firstChild.innerText = info[2].replace(' - ', '\n')
                 newSp.firstChild.classList.remove('display-none')
-                newSp.lastChild.innerText = info[1]
                 newSp.firstChild.style.fontSize = 'x-small'
-                newSp.lastChild.style.fontSize = 'small'
+                newSp.children[1].innerText = info[1]
+                newSp.lastChild.classList.remove('display-none')
+                newSp.lastChild.style.fontSize = 'x-small'
 
                 // calculate cell to put card
                 // row index = ABS of division index ind / hoursLength
@@ -2251,6 +2439,28 @@ It is provided as is under "MIT License"
             // set --tile-width for new tables to x5
             const newTileWidth = parseInt(tileWidth) * 5
             document.documentElement.style.setProperty('--tile-width', newTileWidth + 'px');
+        }
+
+        function setTileWidth() {
+            // save original value of css var --tile-width to variable
+            tileWidth = window.getComputedStyle(document.body).getPropertyValue('--tile-width')
+            let newTileWidth = prompt("Set width of cards in pixels. Default: 30", parseInt(tileWidth))
+            if (!parseInt(newTileWidth)) return
+            document.documentElement.style.setProperty('--tile-width', newTileWidth + 'px');
+        }
+
+        function getOrdinal(n) {
+            let ord = 'th';
+            if (n % 10 == 1 && n % 100 != 11) {
+                ord = 'st';
+            }
+            else if (n % 10 == 2 && n % 100 != 12) {
+                ord = 'nd';
+            }
+            else if (n % 10 == 3 && n % 100 != 13) {
+                ord = 'rd';
+            }
+            return n + ord;
         }
 
     </script>
