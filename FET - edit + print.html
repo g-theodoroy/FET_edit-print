@@ -187,6 +187,7 @@ It is provided as is under "MIT License"
             font-size: 10px;
             color: #6c6d6e;
             text-align: center;
+            vertical-align: top;
             max-width: var(--tile-width);
             word-wrap: break-word;
             background-color: #fafafa;
@@ -1418,8 +1419,19 @@ It is provided as is under "MIT License"
             const tbody = cell.parentElement.parentElement
             const rowsLegth = tbody.rows.length
 
-            const dropHour = cell.getAttribute('hour')?.replace(/[^0-9]/g, "")
-            const dragHour = draggedElement.parentElement.getAttribute('hour')?.replace(/[^0-9]/g, "")
+            let dropHour = cell.getAttribute('hour')?.replace(/[^0-9]/g, "")
+            let dragHour = draggedElement.parentElement.getAttribute('hour')?.replace(/[^0-9]/g, "")
+            if (draggedElement.getAttribute('w') > 1) {
+                if (dragHour) {
+                    dragStopHour = +dragHour + +draggedElement.getAttribute('w') - 1
+                    dragHour = getOrdinal(dragHour) + ' - ' + getOrdinal(dragStopHour)
+                }
+                dropStopHour = +dropHour + +draggedElement.getAttribute('w') - 1
+                dropHour = getOrdinal(dropHour) + ' - ' + getOrdinal(dropStopHour)
+            } else {
+                if (dragHour) dragHour = getOrdinal(dragHour)
+                dropHour = getOrdinal(dropHour)
+            }
 
 
             const dragElId = draggedElement.id
@@ -1550,7 +1562,7 @@ It is provided as is under "MIT License"
 
             // ask user to confirm
             if (message.length) {
-                headMessage = `Moved activity\n\n${dragElTeacher}\ngroup:    ${dragElTmima}\n` + (dragElRoom ? `room:     ${dragElRoom}\n` : '') + `\nfrom ${getOrdinal(dragHour)} to ${getOrdinal(dropHour)} hour, conflicts with\n`
+                headMessage = `Moved activity\n\n` + (dragHour ? `${dragHour} hour\n` : '') + `${dragElTeacher}\ngroup:    ${dragElTmima}\n` + (dragElRoom ? `room:     ${dragElRoom}\n\n` : '') + (dragHour ? `from ${dragHour} ` : '') + `to ${dropHour} hour\n\nconflicts with\n`
                 var ok = confirm(headMessage + message.join("") + '\nPlease confirm substitution.')
                 if (!ok) {
                     removeBackground(draggedElement)
@@ -1731,7 +1743,7 @@ It is provided as is under "MIT License"
                     let toRemove = table.tBodies[0].rows[j].cells[i].getAttribute('tmima')
                     let rooms = table.tBodies[0].rows[j].cells[i].getAttribute('room')
 
-                    // if group present i remove it from array
+                    // if group present i remove it from arraycolGroupsArray
                     if (toRemove) {
 
                         toRemove = toRemove.split(',')
@@ -1776,7 +1788,7 @@ It is provided as is under "MIT License"
                         table.tHead.rows[1].cells[i - 1].style.background = ''
                         table.tHead.rows[1].cells[i - 1].setAttribute('info', '')
                     }
-                    table.tFoot.rows[0].cells[i].textContent = colGroupsArray
+                    table.tFoot.rows[0].cells[i].innerHTML = colGroupsArray.sort().join('<br>')
                 } else {
                     table.tHead.rows[1].cells[i - 1].style.background = ''
                     table.tHead.rows[1].cells[i - 1].setAttribute('info', '')
