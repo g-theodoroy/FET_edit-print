@@ -1562,7 +1562,7 @@ It is provided as is under "MIT License"
 
             // ask user to confirm
             if (message.length) {
-                headMessage = `Moved activity\n\n` + (dragHour ? `${dragHour} hour\n` : '') + `${dragElTeacher}\ngroup:    ${dragElTmima}\n` + (dragElRoom ? `room:     ${dragElRoom}\n\n` : '') + (dragHour ? `from ${dragHour} ` : '') + `to ${dropHour} hour\n\nconflicts with\n`
+                headMessage = `Moved activity\n\n` + (dragHour ? `${dragHour} hour\n` : '') + `${dragElTeacher}\ngroup:    ${dragElTmima}\n` + (dragElRoom ? `room:     ${dragElRoom}\n` : '') + (dragHour ? `\nfrom ${dragHour} ` : '\n') + `to ${dropHour} hour conflicts with\n`
                 var ok = confirm(headMessage + message.join("") + '\nPlease confirm substitution.')
                 if (!ok) {
                     removeBackground(draggedElement)
