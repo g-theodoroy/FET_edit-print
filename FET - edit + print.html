@@ -1418,8 +1418,8 @@ It is provided as is under "MIT License"
             const tbody = cell.parentElement.parentElement
             const rowsLegth = tbody.rows.length
 
-            const dropHour = cell.getAttribute('hour').replace(/[^0-9]/g, "")
-            const dragHour = draggedElement.parentElement.getAttribute('hour').replace(/[^0-9]/g, "")
+            const dropHour = cell.getAttribute('hour')?.replace(/[^0-9]/g, "")
+            const dragHour = draggedElement.parentElement.getAttribute('hour')?.replace(/[^0-9]/g, "")
 
 
             const dragElId = draggedElement.id
