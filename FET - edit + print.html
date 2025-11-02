@@ -1015,10 +1015,9 @@ It is provided as is under "MIT License"
             }
 
 
-            // read activities rooms
+            // read activities rooms and add them in objAct
 
             const activitiesRooms = xml.getElementsByTagName("ConstraintActivityPreferredRoom");
-            const objActivitiesRooms = []
 
             for (let i = 0; i < activitiesRooms.length; i++) {
 
@@ -1031,8 +1030,7 @@ It is provided as is under "MIT License"
                 // so we don,t add the card
                 if (!objAct[id]) continue
 
-                objActivitiesRooms[id] = activitiesRooms[i].getElementsByTagName("Room")[0].textContent
-
+                objAct[id].room = activitiesRooms[i].getElementsByTagName("Room")[0].textContent
             }
 
             // -------- create table ------------
@@ -1099,9 +1097,9 @@ It is provided as is under "MIT License"
             // 3rd row and after -----
             // enter schedule data
 
-            // 1st column - teacher names
             for (let i = 0; i < Object.keys(teachersIndexList).length; i++) {
                 let row = tbody.insertRow();
+                // 1st column - teacher names
                 cell = row.insertCell()
                 cell.textContent = Object.keys(teachersIndexList)[i] == 'notAv' ? '' : Object.keys(teachersIndexList)[i]
                 cell.classList.add('text-small')
@@ -1152,11 +1150,11 @@ It is provided as is under "MIT License"
                 tmimaSpan.id = objActivitiesStartTimes[i].id;
                 tmimaSpan.setAttribute("teacher", objActivitiesStartTimes[i].data.teacherStr);
                 tmimaSpan.setAttribute("tmima", objActivitiesStartTimes[i].data.tmimata);
-                objActivitiesRooms[tmimaSpan.id] ? tmimaSpan.setAttribute("room", objActivitiesRooms[tmimaSpan.id]) : false
+                objActivitiesStartTimes[i].data.room ? tmimaSpan.setAttribute("room", objActivitiesStartTimes[i].data.room) : false
                 tmimaSpan.setAttribute("row", row.rowIndex);
                 tmimaSpan.setAttribute("col", cell.cellIndex);
-                tmimaSpan.innerHTML = `<span class="top-span display-none" style="font-size:${initFontSize}">` + objActivitiesStartTimes[i].data.subject + '</span>' + '<span class="bottom-span">' + objActivitiesStartTimes[i].data.tmima + '</span>' + `<span class="top-span display-none" style="font-size:${initFontSize}">` + (objActivitiesRooms[tmimaSpan.id] ? "\n" + objActivitiesRooms[tmimaSpan.id] : '');
-                tmimaSpan.setAttribute('info', objActivitiesStartTimes[i].data.tmima + " - " + objActivitiesStartTimes[i].data.duration + '/' + objActivitiesStartTimes[i].data.totalDuration + "\n" + objActivitiesStartTimes[i].data.subject + "\n" + objActivitiesStartTimes[i].data.teacherStr + (objActivitiesRooms[tmimaSpan.id] ? "\n" + objActivitiesRooms[tmimaSpan.id] : ''))
+                tmimaSpan.innerHTML = `<span class="top-span display-none" style="font-size:${initFontSize}">` + objActivitiesStartTimes[i].data.subject + '</span>' + '<span class="bottom-span">' + objActivitiesStartTimes[i].data.tmima + '</span>' + `<span class="top-span display-none" style="font-size:${initFontSize}">` + (objActivitiesStartTimes[i].data.room ? "\n" + objActivitiesStartTimes[i].data.room : '');
+                tmimaSpan.setAttribute('info', objActivitiesStartTimes[i].data.tmima + " - " + objActivitiesStartTimes[i].data.duration + '/' + objActivitiesStartTimes[i].data.totalDuration + "\n" + objActivitiesStartTimes[i].data.subject + "\n" + objActivitiesStartTimes[i].data.teacherStr + (objActivitiesStartTimes[i].data.room ? "\n" + objActivitiesStartTimes[i].data.room : ''))
                 tmimaSpan.draggable = true;
                 if (showColors) tmimaSpan.style.background = objActivitiesStartTimes[i].color
                 // add card to cell
@@ -1164,7 +1162,7 @@ It is provided as is under "MIT License"
                 // set data to cell
                 cell.id = objActivitiesStartTimes[i].id
                 cell.setAttribute('tmima', objActivitiesStartTimes[i].data.tmimata)
-                objActivitiesRooms[tmimaSpan.id] ? cell.setAttribute("room", objActivitiesRooms[tmimaSpan.id]) : false
+                objActivitiesStartTimes[i].data.room ? cell.setAttribute("room", objActivitiesStartTimes[i].data.room) : false
 
                 // make cards wide to simulate duration
                 // all cards have duration 1
@@ -1185,7 +1183,7 @@ It is provided as is under "MIT License"
                         // cell 3 => start = -2,  stop = 0
                         // that way i know in which cell the card belongs
                         row.cells[index + j].setAttribute('tmima', objActivitiesStartTimes[i].data.tmimata)
-                        if (objActivitiesRooms[tmimaSpan.id]) row.cells[index + j].setAttribute('room', objActivitiesRooms[tmimaSpan.id])
+                        if (objActivitiesStartTimes[i].data.room) row.cells[index + j].setAttribute('room', objActivitiesStartTimes[i].data.room)
                         row.cells[index + j].setAttribute('start', 0 - j)
                         row.cells[index + j].setAttribute('stop', clspn - 1 - j)
                     }
@@ -1205,8 +1203,8 @@ It is provided as is under "MIT License"
                     tmimaSpan.setAttribute("tmima", objAct[index].tmimata);
                     tmimaSpan.setAttribute("row", teachersIndexList[objAct[index].teacher[i]]);
                     tmimaSpan.setAttribute("col", warehouseColumnIndex);
-                    tmimaSpan.innerHTML = `<span class="top-span display-none" style="font-size:${initFontSize}">` + objAct[index].subject + '</span>' + '<span class="bottom-span">' + objAct[index].tmima + '</span>';
-                    tmimaSpan.setAttribute('info', objAct[index].tmima + " - " + objAct[index].duration + '/' + objAct[index].totalDuration + "\n" + objAct[index].subject + "\n" + objAct[index].teacherStr)
+                    tmimaSpan.innerHTML = `<span class="top-span display-none" style="font-size:${initFontSize}">` + objAct[index].subject + '</span>' + '<span class="bottom-span">' + objAct[index].tmima + '</span>' + `<span class="top-span display-none" style="font-size:${initFontSize}">` + (objAct[index].room ? "\n" + objAct[index].room : '');
+                    tmimaSpan.setAttribute('info', objAct[index].tmima + " - " + objAct[index].duration + '/' + objAct[index].totalDuration + "\n" + objAct[index].subject + "\n" + objAct[index].teacherStr + (objAct[index].room ? "\n" + objAct[index].room : ''))
                     tmimaSpan.draggable = true;
                     if (showColors) tmimaSpan.style.background = teachersColor[objAct[index].teacher[i]]
 
