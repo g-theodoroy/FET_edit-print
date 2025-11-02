@@ -1200,7 +1200,9 @@ It is provided as is under "MIT License"
                     var tmimaSpan = document.createElement("span");
                     tmimaSpan.setAttribute("class", "drag-span display-inline-block");
                     tmimaSpan.id = index;
+                    tmimaSpan.setAttribute("teacher", objAct[index].teacherStr);
                     tmimaSpan.setAttribute("tmima", objAct[index].tmimata);
+                    objAct[index].room ? tmimaSpan.setAttribute("room", objAct[index].room) : false
                     tmimaSpan.setAttribute("row", teachersIndexList[objAct[index].teacher[i]]);
                     tmimaSpan.setAttribute("col", warehouseColumnIndex);
                     tmimaSpan.innerHTML = `<span class="top-span display-none" style="font-size:${initFontSize}">` + objAct[index].subject + '</span>' + '<span class="bottom-span">' + objAct[index].tmima + '</span>' + `<span class="top-span display-none" style="font-size:${initFontSize}">` + (objAct[index].room ? "\n" + objAct[index].room : '');
