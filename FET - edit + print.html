@@ -865,12 +865,12 @@ It is provided as is under "MIT License"
                 const teacherNA = teachersNotAvailable[i].getElementsByTagName("Teacher")[0].textContent
                 const countNA = teachersNotAvailable[i].getElementsByTagName("Number_of_Not_Available_Times")[0].textContent
                 const timesNA = teachersNotAvailable[i].getElementsByTagName("Not_Available_Time")
-                rowNA = teachersIndexList[teacherNA]
+                const rowNA = teachersIndexList[teacherNA]
 
                 for (let j = 0; j < timesNA.length; j++) {
-                    d = timesNA[j].getElementsByTagName("Day")[0].textContent
-                    h = timesNA[j].getElementsByTagName("Hour")[0].textContent
-                    colNA = daysIndexList[d] * NumOfHours + hoursIndexList[h] + 1
+                    const d = timesNA[j].getElementsByTagName("Day")[0].textContent
+                    const h = timesNA[j].getElementsByTagName("Hour")[0].textContent
+                    const colNA = daysIndexList[d] * NumOfHours + hoursIndexList[h] + 1
                     teachNotAvailable.push({ 'r': rowNA, 'c': colNA })
                 }
             }
@@ -967,6 +967,25 @@ It is provided as is under "MIT License"
             // final groupsArray = sorted uniqueArrGroups
             groupsArray = uniqueArrGroups.sort()
 
+
+            // read activities rooms and add them in objAct
+            const activitiesRooms = xml.getElementsByTagName("ConstraintActivityPreferredRoom");
+
+            for (let i = 0; i < activitiesRooms.length; i++) {
+
+                // load only "Active = true" ConstraintActivityPreferredStartingTime
+                if (activitiesRooms[i].getElementsByTagName("Active")[0].textContent == "false") continue
+
+                const id = activitiesRooms[i].getElementsByTagName("Activity_Id")[0].textContent
+
+                // if activity Active = false is bypassed and there is no id
+                // so we don,t add the card
+                if (!objAct[id]) continue
+
+                objAct[id].room = activitiesRooms[i].getElementsByTagName("Room")[0].textContent
+            }
+
+
             // read activities start times
             const activitiesStartTimes = xml.getElementsByTagName("ConstraintActivityPreferredStartingTime");
             const objActivitiesStartTimes = []
@@ -1015,23 +1034,6 @@ It is provided as is under "MIT License"
             }
 
 
-            // read activities rooms and add them in objAct
-
-            const activitiesRooms = xml.getElementsByTagName("ConstraintActivityPreferredRoom");
-
-            for (let i = 0; i < activitiesRooms.length; i++) {
-
-                // load only "Active = true" ConstraintActivityPreferredStartingTime
-                if (activitiesRooms[i].getElementsByTagName("Active")[0].textContent == "false") continue
-
-                const id = activitiesRooms[i].getElementsByTagName("Activity_Id")[0].textContent
-
-                // if activity Active = false is bypassed and there is no id
-                // so we don,t add the card
-                if (!objAct[id]) continue
-
-                objAct[id].room = activitiesRooms[i].getElementsByTagName("Room")[0].textContent
-            }
 
             // -------- create table ------------
             const table = document.getElementById("programTable");
