@@ -23,6 +23,7 @@ It is provided as is under "MIT License"
             --margin: 0.75px;
             --font-size: 16px;
             --body-y-margin: 30px;
+            --rotate: 15deg;
         }
 
         body {
@@ -152,7 +153,14 @@ It is provided as is under "MIT License"
 
         .dragging {
             opacity: 0.8;
-            border-style: dashed;
+
+            /*	for IE  */
+            transform: rotate(var(--rotate));
+            -ms-transform: rotate(var(--rotate));
+
+            /* 	for browsers supporting webkit (such as chrome, firefox, safari etc.). */
+            -webkit-transform: rotate(var(--rotate));
+            display: inline-block;
         }
 
         .highlight {
@@ -498,42 +506,6 @@ It is provided as is under "MIT License"
 
     <script>
 
-        const showColors = true
-        const spotExpellDuration = 7000
-        const excludeInactiveActivities = true
-
-        // removes lightgreen background of row and green background of cells
-        const removeBackground = (cell) => {
-            draggedElement.parentElement.parentElement.parentElement.rows[draggedElement.getAttribute('row')].style.background = ''
-            Array.from(draggedElement.parentElement.parentElement.parentElement.rows[draggedElement.getAttribute('row')].cells)
-                .forEach(c => c.style.background = '')
-        }
-
-        // sets lightgreen background to teacher row 
-        // sets green background to cells where student-class is missing
-        const setBackgroundGreen = (cell) => {
-            const table = document.getElementById('programTable')
-            const theRow = draggedElement.getAttribute('row')
-
-            const dragElTmima = draggedElement.getAttribute('tmima').replace(',', '<br>') + '<br>'
-            const dragElRoom = draggedElement.getAttribute('room')
-
-            table.tBodies[0].rows[theRow].style.background = '#cfffd7'
-
-            // find possible positions from missing groups stored in footer cell
-            const possiblePositions = Array.from(table.tFoot.rows[0].cells).filter(c => c.innerText !== '')
-            possiblePositions.forEach(p => {
-                if ((p.innerHTML + '<br>').includes(dragElTmima)) {
-                    // if cell marked not-availiable for teacher continue
-                    if (table.tBodies[0].rows[theRow].cells[p.cellIndex].classList.contains('not-av')) { return }
-                    // if room of dragged element is occupied by other group continue
-                    if (dragElRoom && table.tFoot.rows[0].cells[p.cellIndex].getAttribute('rooms').split(',').includes(dragElRoom)) { return }
-                    // all free (group and room). Mark green 
-                    table.tBodies[0].rows[theRow].cells[p.cellIndex].style.background = 'green'
-                }
-            })
-        }
-
         // global variables
         let loadedXml = null;
         let xmlName = null;
@@ -549,10 +521,56 @@ It is provided as is under "MIT License"
         let showFooter = false;
         let tileWidth = null;
         let initFontSize = '0.4rem';
+        const showColors = true
+        const spotExpellDuration = 7000
+        const excludeInactiveActivities = true
+        const whiteboard = document.getElementById('whiteboard')
+
 
         // NN -> NodeName
         let NN_DAY = 'Preferred_Day'
         let NN_HOUR = 'Preferred_Hour'
+
+        // removes lightgreen background of row and green background of cells
+        const removeBackground = (cell) => {
+            draggedElement.parentElement.parentElement.parentElement.rows[draggedElement.getAttribute('row')].style.background = ''
+            Array.from(draggedElement.parentElement.parentElement.parentElement.rows[draggedElement.getAttribute('row')].cells)
+                .forEach(c => c.style.background = '')
+        }
+
+        // sets lightgreen background to teacher row 
+        // sets green background to cells where student-class is missing
+        const setBackgroundGreen = (cell) => {
+            const table = document.getElementById('programTable')
+            const theRow = draggedElement.getAttribute('row')
+
+            const dragElTmima = draggedElement.getAttribute('tmima').split(',')
+            const dragElRoom = draggedElement.getAttribute('room')
+
+            table.tBodies[0].rows[theRow].style.background = '#cfffd7'
+
+            // find possible positions from missing groups stored in footer cell
+            const possiblePositions = Array.from(table.tFoot.rows[0].cells).filter(c => c.innerText !== '')
+            possiblePositions.forEach(p => {
+                let pTmimata = p.innerHTML.split('<br>')
+                let chkInludes = true
+                dragElTmima.forEach(t => {
+                    if (!pTmimata.includes(t)) chkInludes = false
+                })
+
+                if (chkInludes) {
+                    // if cell marked not-availiable for teacher continue
+                    if (table.tBodies[0].rows[theRow].cells[p.cellIndex].classList.contains('not-av')) { return }
+                    // if room of dragged element is occupied by other group continue
+                    if (dragElRoom && table.tFoot.rows[0].cells[p.cellIndex].getAttribute('rooms').split(',').includes(dragElRoom)) { return }
+                    // if drop in cell is not allowed continue
+                    if (!allowDrop(table.tBodies[0].rows[theRow].cells[p.cellIndex])) { return }
+
+                    // all free (group and room). Mark green 
+                    table.tBodies[0].rows[theRow].cells[p.cellIndex].style.background = 'green'
+                }
+            })
+        }
 
         // add event listener to file element
         document.getElementById('xmlFileInput').addEventListener('change', handleFileSelect, false);
@@ -1200,9 +1218,6 @@ It is provided as is under "MIT License"
                     tmimaSpan.setAttribute("w", clspn);
                     tmimaSpan.setAttribute("hour", tmimaSpan.getAttribute("hour") + '-' + getKeyByValue(hoursIndexList, parseInt(hoursIndexList[cell.getAttribute('hour')]) + parseInt(clspn) - 1))
 
-
-
-
                     index = cell.cellIndex
                     for (j = 0; j < clspn; j++) {
                         // set group to all cells that occupies the card
@@ -1407,7 +1422,9 @@ It is provided as is under "MIT License"
 
         function handleDragStart(e) {
             draggedElement = e.target;
-            draggedElement.classList.add('dragging');
+            document.querySelectorAll(`span[id="${draggedElement.id}"]`).forEach(sp => {
+                sp.classList.add('dragging');
+            })
             e.dataTransfer.effectAllowed = 'move';
             // set background green at allowed for drop row
             setBackgroundGreen(draggedElement)
@@ -1419,18 +1436,50 @@ It is provided as is under "MIT License"
         }
 
         function handleDragEnd(e) {
+            document.querySelectorAll(`span[id="${draggedElement.id}"]`).forEach(sp => {
+                sp.classList.remove('dragging');
+            })
             draggedElement.classList.remove('dragging');
             // set card drag status to default
             const spans = Array.from(document.querySelectorAll(`.drag-span`))
             spans.forEach(el => el.classList.remove('no-drag'))
+
+            whiteboard.innerText = ''
+            whiteboard.classList.add('display-none');
+            whiteboard.animate({
+                left: `50%`,
+                top: `5px`
+            }, { duration: 10, fill: "forwards" })
+
+            removeBackground(draggedElement)
+
         }
 
         function handleDragOver(e) {
             e.preventDefault();
             // highlight closer cell for drop
+            const { clientX, clientY } = e
             const cell = e.target.closest('td');
             cell.classList.add('highlight');
             setTimeout(() => cell.classList.remove('highlight'), 200);
+
+            const affectedCells = getAffectedCells(cell)
+            const affectedSpans = getAffectedSpans(affectedCells)
+            const message = getMessage(cell, affectedSpans)
+
+            if (message.length) {
+                whiteboard.classList.remove('display-none')
+                whiteboard.innerText = message
+                whiteboard.animate({
+                    left: `${clientX + 20 + whiteboard.offsetWidth / 2}px`,
+                    top: clientY > window.innerHeight / 2 ? `${clientY - whiteboard.offsetHeight - 20}px` : `${clientY + 20}px`
+                }, { duration: 500, fill: "forwards" })
+            } else {
+                whiteboard.classList.add('display-none')
+            }
+
+            if (!allowDrop(cell)) e.dataTransfer.dropEffect = 'none'
+
         }
 
         // clean things after drop
@@ -1439,18 +1488,81 @@ It is provided as is under "MIT License"
             el = null;
         }
 
-        function handleDrop(e) {
-            e.preventDefault();
-
-            const cell = e.target.closest('td');
-            if (!(cell && draggedElement)) { return }
-
-            const table = cell.parentElement.parentElement.parentElement
-
+        function allowDrop(cell) {
+            const dragElId = draggedElement.id
+            const dragElSize = draggedElement.getAttribute('w')
+            const cellId = +cell.id + +cell.getAttribute('start')
             const columnIndex = cell.getAttribute('col-idx')
-            const tbody = cell.parentElement.parentElement
-            const rowsLegth = tbody.rows.length
 
+            // if drop is in the old cell that drag started i do nothing
+            if (dragElId == cellId) {
+                return false
+            }
+
+            // if card size is 2 or 3 i prevent droping in last hours
+            let lastHoursAllowance = columnIndex % hoursLength
+            if (lastHoursAllowance == 0) {
+                lastHoursAllowance = 1
+            } else {
+                lastHoursAllowance = hoursLength - lastHoursAllowance + 1
+            }
+            if (dragElSize > lastHoursAllowance) {
+                return false
+            }
+            return true
+        }
+
+        function getAffectedCells(cell) {
+
+            const dragElTmima = draggedElement.getAttribute('tmima').split(',')
+            const dragElRoom = draggedElement.getAttribute('room')
+            const dragElTeacher = draggedElement.getAttribute('teacher')
+            const dragElRow = draggedElement.getAttribute('row')
+            const dragElSize = draggedElement.getAttribute('w')
+            const columnIndex = cell.getAttribute('col-idx')
+            // find row/rows of draggedElement/draggedElements
+            const draggedSpansRows = Array.from(document.querySelectorAll(`span[id="${draggedElement.id}"]`)).map(el => el.getAttribute('row'))
+
+            if (!allowDrop(cell)) return []
+
+            // add subgroups or parent group to affected groups
+            let affectedElTmimata = [...dragElTmima]
+            if (xmlGroupsArray[dragElTmima] !== undefined) affectedElTmimata = [...affectedElTmimata, ...xmlGroupsArray[dragElTmima]]
+            if (subgroupsArray[dragElTmima] !== undefined) affectedElTmimata = [...affectedElTmimata, ...subgroupsArray[dragElTmima]]
+
+            // keep values of affectedElTmimata only once ( unique)
+            affectedElTmimata = Array.from(new Set(affectedElTmimata))
+
+            let affectedCells = []
+            for (i = 0; i < dragElSize; i++) {
+                const moreCells = Array.from(document.querySelectorAll(`td[col-idx="${+columnIndex + i}"]`))
+                    .filter(c =>
+                        intersects(c.getAttribute('tmima')?.split(','), affectedElTmimata) || // same groups
+                        (dragElRoom && c.getAttribute('room') == dragElRoom) || // same room
+                        (dragElTeacher && intersects(c.getAttribute('teacher')?.split(','), dragElTeacher?.split(','))) || // same teacher
+                        draggedSpansRows.includes(c.getAttribute('row-idx')) // overlap in same row
+                    )
+                affectedCells = [...affectedCells, ...moreCells]
+            }
+
+            affectedCells = affectedCells.sort((a, b) => parseInt(a.getAttribute('hour')) > parseInt(b.getAttribute('hour'))).sort((a, b) => parseInt(a.getAttribute('row')) > parseInt(b.getAttribute('row')))
+            return affectedCells
+        }
+
+
+        function getAffectedSpans(affectedCells) {
+            let affectedSpans = []
+            affectedCells.forEach(c => {
+                if (c.firstChild) {
+                    affectedSpans.push(c.firstChild)
+                } else {
+                    if (document.querySelector(`span[id="${c.id}"]`)) affectedSpans.push(document.querySelector(`span[id="${c.id}"]`))
+                }
+            })
+            return affectedSpans
+        }
+
+        function getMessage(cell, affectedSpans) {
 
             let dropHour = cell.getAttribute('hour')?.replace(/[^0-9]/g, "")
             let dragHour = draggedElement.parentElement.getAttribute('hour')?.replace(/[^0-9]/g, "")
@@ -1466,70 +1578,13 @@ It is provided as is under "MIT License"
                 dropHour = getOrdinal(dropHour)
             }
 
-
-            const dragElId = draggedElement.id
             const dragElTmima = draggedElement.getAttribute('tmima').split(',')
             const dragElRoom = draggedElement.getAttribute('room')
-            const dragElRow = draggedElement.getAttribute('row')
-            const dragElCol = draggedElement.getAttribute('col')
-            const dragElSize = draggedElement.getAttribute('w')
             const dragElTeacher = draggedElement.getAttribute('teacher')
-
-            // add subgroups or parent group to affected groups
-            let affectedElTmimata = [...dragElTmima]
-            if (xmlGroupsArray[dragElTmima] !== undefined) affectedElTmimata = [...affectedElTmimata, ...xmlGroupsArray[dragElTmima]]
-            if (subgroupsArray[dragElTmima] !== undefined) affectedElTmimata = [...affectedElTmimata, ...subgroupsArray[dragElTmima]]
-
-            // keep values of affectedElTmimata only once ( unique)
-            affectedElTmimata = Array.from(new Set(affectedElTmimata))
-
-            // set card drag status to default
-            const spans = Array.from(document.querySelectorAll(`.drag-span`))
-            spans.forEach(el => el.classList.remove('no-drag'))
-            // all cells occupied of card have the same id
-            // only the first holds the card id + start(=0) 
-            const cellId = +cell.id + +cell.getAttribute('start')
-
-            // if drop is in the old cell that drag started i do nothing
-            if (dragElId == cellId) {
-                removeBackground(draggedElement)
-                clearElement(draggedElement)
-                return
-            }
-
-            // if card size is 2 or 3 i prevent droping in last hours
-            let lastHoursAllowance = columnIndex % hoursLength
-            if (lastHoursAllowance == 0) {
-                lastHoursAllowance = 1
-            } else {
-                lastHoursAllowance = hoursLength - lastHoursAllowance + 1
-            }
-            if (dragElSize > lastHoursAllowance) {
-                removeBackground(draggedElement)
-                clearElement(draggedElement)
-                return
-            }
-
-            let affectedCells = []
-            for (i = 0; i < dragElSize; i++) {
-                const moreCells = Array.from(document.querySelectorAll(`td[col-idx="${+columnIndex + i}"]`))
-                    .filter(c => intersects(c.getAttribute('tmima')?.split(','), affectedElTmimata) || (dragElRoom && c.getAttribute('room') == dragElRoom) || (dragElTeacher && intersects(c.getAttribute('teacher')?.split(','), dragElTeacher?.split(','))))
-                affectedCells = [...affectedCells, ...moreCells]
-            }
-
-            affectedCells = affectedCells.sort((a, b) => parseInt(a.getAttribute('hour')) > parseInt(b.getAttribute('hour'))).sort((a, b) => parseInt(a.getAttribute('row')) > parseInt(b.getAttribute('row')))
-
-            let affectedSpans = []
-            affectedCells.forEach(c => {
-                if (c.firstChild) {
-                    affectedSpans.push(c.firstChild)
-                } else {
-                    if (document.querySelector(`span[id="${c.id}"]`)) affectedSpans.push(document.querySelector(`span[id="${c.id}"]`))
-                }
-            })
 
             // creating message for user checking what should do at 2nd round
             let message = []
+            let finalMessage = ''
 
             affectedSpans.forEach(el => {
                 const apo = +el.parentElement.getAttribute('hour').replace(/[^0-9]/g, "") + +el.parentElement.getAttribute('start')
@@ -1541,12 +1596,47 @@ It is provided as is under "MIT License"
             // get unique messages of array 
             message = Array.from(new Set(message))
 
-            // ask user to confirm
             if (message.length) {
                 headMessage = `Moved activity\n\n` + (dragHour ? `${dragHour} hour\n` : '') + `${dragElTeacher}\ngroup:    ${dragElTmima}\n` + (dragElRoom ? `room:     ${dragElRoom}\n` : '') + (dragHour ? `\nfrom ${dragHour} ` : '\n') + `to ${dropHour} hour conflicts with\n`
-                var ok = confirm(headMessage + message.join("") + '\nPlease confirm substitution.')
+                finalMessage = headMessage + message.join("")
+            }
+
+            return finalMessage
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+
+            const cell = e.target.closest('td');
+            if (!(cell && draggedElement)) { return }
+
+            const table = cell.parentElement.parentElement.parentElement
+
+            const columnIndex = cell.getAttribute('col-idx')
+            const tbody = cell.parentElement.parentElement
+            const rowsLegth = tbody.rows.length
+
+            const dragElId = draggedElement.id
+            const dragElTmima = draggedElement.getAttribute('tmima').split(',')
+            const dragElRoom = draggedElement.getAttribute('room')
+            const dragElSize = draggedElement.getAttribute('w')
+            const dragElTeacher = draggedElement.getAttribute('teacher')
+
+
+            // set card drag status to default
+            const spans = Array.from(document.querySelectorAll(`.drag-span`))
+            spans.forEach(el => el.classList.remove('no-drag'))
+
+            // find conflicting cards
+            const affectedCells = getAffectedCells(cell)
+            const affectedSpans = getAffectedSpans(affectedCells)
+            const message = getMessage(cell, affectedSpans)
+
+            // ask user to confirm
+            if (message) {
+                var ok = confirm(message + '\nPlease confirm substitution.')
                 if (!ok) {
-                    removeBackground(draggedElement)
+                    // removeBackground(draggedElement)
                     return
                 }
             }
@@ -1565,12 +1655,14 @@ It is provided as is under "MIT License"
             })
 
             // send affected cards to ware house
-            affectedSpans.forEach(sp => {
-                if (!sp) return
-                sp.setAttribute('col', warehouseColumnIndex)
-                sp.removeAttribute('day')
-                sp.removeAttribute('hour')
-                tbody.rows[sp.getAttribute('row')].cells[warehouseColumnIndex].appendChild(sp)
+            affectedSpans.forEach(span => {
+                if (!span) return
+                document.querySelectorAll(`span[id="${span.id}"]`).forEach(sp => {
+                    sp.setAttribute('col', warehouseColumnIndex)
+                    sp.removeAttribute('day')
+                    sp.removeAttribute('hour')
+                    tbody.rows[sp.getAttribute('row')].cells[warehouseColumnIndex].appendChild(sp)
+                })
             })
 
             //clean affected cells
@@ -1612,7 +1704,7 @@ It is provided as is under "MIT License"
                 }
             })
 
-            removeBackground(draggedElement)
+            // removeBackground(draggedElement)
             clearElement(draggedElement)
 
             findMissingTmimata()
@@ -1744,6 +1836,8 @@ It is provided as is under "MIT License"
             existingElementsCells.forEach(el => {
                 el.removeAttribute('id')
                 el.removeAttribute('tmima')
+                el.removeAttribute('teacher')
+                el.removeAttribute('room')
                 el.removeAttribute('start')
                 el.removeAttribute('stop')
                 el.classList.add('spot-expelled');
@@ -2277,7 +2371,7 @@ It is provided as is under "MIT License"
                     .filter(t => t.getAttribute('tmima')?.split(',').includes(tm))
                     .sort((a, b) => a.getAttribute('hour') > b.getAttribute('hour'))
                     .sort((a, b) => a.getAttribute('day') > b.getAttribute('day'))
- 
+
                 // insert first cell with name of Group
                 const newCell = document.createElement('td')
                 newTable.tHead.rows[0].insertBefore(newCell, newTable.tHead.rows[0].firstChild)
