@@ -118,6 +118,12 @@ It is provided as is under "MIT License"
             width: calc((var(--tile-width) + (var(--padding) * var(--mf)) + (var(--margin) * (var(--mf) - 1))) * var(--mf))
         }
 
+        span.conflicting {
+            color: #fff !important;
+            background-color: #992727 !important;
+            border: 1px solid #580000 !important;
+        }
+
         td.w-3 {
             --mf: 6;
             width: calc((var(--tile-width) + (var(--padding) * var(--mf)) + (var(--margin) * (var(--mf) + 1))) * var(--mf))
@@ -129,7 +135,7 @@ It is provided as is under "MIT License"
             margin: var(--margin);
             cursor: move;
             border: 1px solid #90caf9;
-            border-radius: 4px;
+            border-radius: 5px;
             user-select: none;
             text-align: center;
             /* overflow: hidden; */
@@ -193,12 +199,15 @@ It is provided as is under "MIT License"
             border: none;
             padding-top: 5px;
             font-size: 10px;
-            color: #6c6d6e;
+            color: #323333;
             text-align: center;
             vertical-align: top;
             max-width: var(--tile-width);
             word-wrap: break-word;
             background-color: #fafafa;
+            position: sticky;
+            bottom: 0px;
+            opacity: 95%
         }
 
         div.whiteboard {
@@ -247,11 +256,9 @@ It is provided as is under "MIT License"
 
         .gth {
             position: fixed;
-            bottom: 1px;
-            left: 50%;
-            transform: translateX(-50%);
+            top: 1px;
+            right: 3px;
             color: rgb(155, 155, 155);
-            text-align: center;
             text-decoration: none;
             font-size: 12px;
         }
@@ -450,9 +457,8 @@ It is provided as is under "MIT License"
         </div>
 
         <div class="gth  no-print">
-            <span>copyright: George Theodoroy, licence: MIT Licence, mail: </span>
             <a class="a-gth" href="mailto:g.theodoroy@gmail.com?subject=FET-edit+print"
-                title="mail to: George Theodoroy">GΘ@2025</a>
+                title="mail to: George Theodoroy">&copy; GΘ@2025</a>
         </div>
 
     </div>
@@ -1077,6 +1083,7 @@ It is provided as is under "MIT License"
                 cell.setAttribute('col', i)
                 cell.classList.add('footer', 'no-print', 'display-none')
             }
+            row.cells[0].innerText = 'Students with no activities at certain Day-Hour'
 
 
             // 1st row ------
@@ -1452,7 +1459,7 @@ It is provided as is under "MIT License"
             }, { duration: 10, fill: "forwards" })
 
             removeBackground(draggedElement)
-
+            clearAffected()
         }
 
         function handleDragOver(e) {
@@ -1467,12 +1474,15 @@ It is provided as is under "MIT License"
             const affectedSpans = getAffectedSpans(affectedCells)
             const message = getMessage(cell, affectedSpans)
 
+            const spWidth = parseInt(window.getComputedStyle(document.body).getPropertyValue('--tile-width'))
+
+            const dragElSize = draggedElement.getAttribute('w')
             if (message.length) {
                 whiteboard.classList.remove('display-none')
                 whiteboard.innerText = message
                 whiteboard.animate({
-                    left: `${clientX + 20 + whiteboard.offsetWidth / 2}px`,
-                    top: clientY > window.innerHeight / 2 ? `${clientY - whiteboard.offsetHeight - 20}px` : `${clientY + 20}px`
+                    left: `${clientX + spWidth * (+dragElSize + 1) + whiteboard.offsetWidth / 2}px`,
+                    top: clientY > window.innerHeight / 2 ? `${clientY - whiteboard.offsetHeight - spWidth}px` : `${clientY + spWidth}px`
                 }, { duration: 500, fill: "forwards" })
             } else {
                 whiteboard.classList.add('display-none')
@@ -1480,6 +1490,23 @@ It is provided as is under "MIT License"
 
             if (!allowDrop(cell)) e.dataTransfer.dropEffect = 'none'
 
+            clearAffected()
+            affectedSpans.forEach(span => {
+                if (!span) return
+                document.querySelectorAll(`span[id="${span.id}"]`).forEach(sp => {
+                    sp.classList.add('dragging')
+                    sp.classList.add('conflicting')
+                })
+            })
+        }
+
+
+        function clearAffected() {
+            Array.from(document.querySelectorAll('.conflicting'))
+                .forEach(sp => {
+                    sp.classList.remove('dragging')
+                    sp.classList.remove('conflicting')
+                })
         }
 
         // clean things after drop
