@@ -1586,6 +1586,7 @@ It is provided as is under "MIT License"
                     if (document.querySelector(`span[id="${c.id}"]`)) affectedSpans.push(document.querySelector(`span[id="${c.id}"]`))
                 }
             })
+            affectedSpans = affectedSpans.filter(sp => sp.id !== draggedElement.id)
             return affectedSpans
         }
 
