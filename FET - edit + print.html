@@ -24,6 +24,7 @@ It is provided as is under "MIT License"
             --font-size: 16px;
             --body-y-margin: 30px;
             --rotate: 15deg;
+            --opacity: 90%;
         }
 
         body {
@@ -124,6 +125,10 @@ It is provided as is under "MIT License"
             border: 1px solid #580000 !important;
         }
 
+        tr.conflicting {
+            background-color: #fcdddd !important;
+        }
+
         td.w-3 {
             --mf: 6;
             width: calc((var(--tile-width) + (var(--padding) * var(--mf)) + (var(--margin) * (var(--mf) + 1))) * var(--mf))
@@ -187,8 +192,11 @@ It is provided as is under "MIT License"
 
         td.warehouse {
             border: none;
-            min-width: calc(var(--tile-width)*3);
+            min-width: calc(var(--tile-width));
             background-color: #fafafa;
+            position: sticky;
+            right: 0px;
+            opacity: var(--opacity);
         }
 
         td.warehouse>* {
@@ -207,7 +215,7 @@ It is provided as is under "MIT License"
             background-color: #fafafa;
             position: sticky;
             bottom: 0px;
-            opacity: 95%
+            opacity: var(--opacity);
         }
 
         div.whiteboard {
@@ -218,14 +226,15 @@ It is provided as is under "MIT License"
             font-weight: normal;
             font-size: 16px;
             background-color: #fafafa;
+            opacity: var(--opacity);
             padding: 5px;
             margin: var(--margin);
-            border-radius: 4px;
-            border: 1px solid;
-            border-color: #eeeeee;
+            border-radius: 10px;
+            border: 3px solid;
+            border-color: #cbd6df;
         }
 
-        td.strike {
+        .strike {
             text-decoration: line-through;
         }
 
@@ -435,6 +444,7 @@ It is provided as is under "MIT License"
         </div>
         <div id="setTitle" onclick="setTitle()" class="undo-redo-button display-none no-print show-hide"
             title="Set title">&#9997;</div>
+        <div id="showHideDays" class="undo-redo-button display-none no-print show-hide" title="Show/Hide day"></div>
         <div id="printTeachers" onclick="printTeachersSchedule()"
             class="undo-redo-button display-none no-print show-hide" title="Print Teachers Schedule">T</div>
         <div id="printGroups" onclick="printGroupsSchedule()" class="undo-redo-button display-none no-print show-hide"
@@ -1078,10 +1088,11 @@ It is provided as is under "MIT License"
             const tfoot = table.tFoot
 
             let row = tfoot.insertRow()
+            row.classList.add('footRow', 'display-none')
             for (i = 0; i < tableColNum; i++) {
                 let cell = row.insertCell()
                 cell.setAttribute('col', i)
-                cell.classList.add('footer', 'no-print', 'display-none')
+                cell.classList.add('footer', 'no-print')
             }
             row.cells[0].innerText = 'Students with no activities at certain Day-Hour'
 
@@ -1103,12 +1114,11 @@ It is provided as is under "MIT License"
                 const dayLong = days[i].getElementsByTagName("Long_Name")[0].textContent;
                 const dateName = dayLong ? dayLong : dayShort;
                 let cell = row.insertCell()
+                cell.id = dayShort
                 cell.colSpan = NumOfHours
                 cell.textContent = dateName
                 cell.classList.add('text-center', 'day')
                 cell.classList.add('mark-border')
-                cell.style.cursor = 'pointer'
-                cell.title = 'Do not print'
             }
 
             // 2nd row -----
@@ -1278,6 +1288,20 @@ It is provided as is under "MIT License"
 
             }
 
+            // create buttons to Hide/Show days
+            const showHideDays = document.getElementById('showHideDays')
+            for (let i = 0; i < days.length; i++) {
+                const dayDiv = document.createElement('div')
+                const day = days[i].getElementsByTagName("Name")[0].textContent
+                dayDiv.innerText = days[i].getElementsByTagName("Name")[0].textContent + ' '
+                dayDiv.id = day + 'btn'
+                dayDiv.style.marginInline = '1px'
+                dayDiv.style.fontSize = 'small'
+                dayDiv.classList.add("display-inline-block")
+                dayDiv.addEventListener('click', () => dayShowHide(document.getElementById(day)))
+                showHideDays.appendChild(dayDiv)
+            }
+
             eventListeners()
             saveTable(table)
         }
@@ -1309,16 +1333,14 @@ It is provided as is under "MIT License"
                 c.addEventListener('click', () => teacherNoPrint(c))
             })
 
-            const dayRowCells = Array.from(document.querySelectorAll(`.day`))
-            dayRowCells.forEach(d => {
-                d.addEventListener('click', () => dayNoPrint(d))
-            })
 
             const hourColCells = Array.from(document.querySelectorAll(`.hour`))
             hourColCells.forEach(c => {
                 c.onmouseover = function () {
-                    document.getElementById('whiteboard').innerText = this.getAttribute('info') ? this.getAttribute('info').replace(', ', '\n') : '';
-                    document.getElementById('whiteboard').classList.remove('display-none');
+                    if (this.getAttribute('info')) {
+                        document.getElementById('whiteboard').innerText = this.getAttribute('info').replace(', ', '\n')
+                        document.getElementById('whiteboard').classList.remove('display-none');
+                    }
                 };
                 c.onmouseout = function () {
                     document.getElementById('whiteboard').innerText = '';
@@ -1481,9 +1503,11 @@ It is provided as is under "MIT License"
                 whiteboard.classList.remove('display-none')
                 whiteboard.innerText = message
                 whiteboard.animate({
-                    left: `${clientX + spWidth * (+dragElSize + 1) + whiteboard.offsetWidth / 2}px`,
-                    top: clientY > window.innerHeight / 2 ? `${clientY - whiteboard.offsetHeight - spWidth}px` : `${clientY + spWidth}px`
-                }, { duration: 500, fill: "forwards" })
+                    // left: clientX < window.innerWidth / 2 ? `${clientX + spWidth + spWidth * dragElSize + whiteboard.offsetWidth / 2}px` : `${clientX - spWidth - spWidth * dragElSize - whiteboard.offsetWidth / 2}px`,
+                    // top: clientY > window.innerHeight / 2 ? `${clientY - whiteboard.offsetHeight - spWidth}px` : `${clientY + spWidth}px`
+                    left: clientX > window.innerWidth / 2 ? `${window.innerWidth / 3 + clientX - window.innerWidth / 2}px` : `${window.innerWidth / 3 * 2 + clientX - window.innerWidth / 2}px`,
+                    top: `${window.innerHeight / 9}px`
+                }, { duration: 1000, fill: "forwards" })
             } else {
                 whiteboard.classList.add('display-none')
             }
@@ -1491,12 +1515,10 @@ It is provided as is under "MIT License"
             if (!allowDrop(cell)) e.dataTransfer.dropEffect = 'none'
 
             clearAffected()
-            affectedSpans.forEach(span => {
-                if (!span) return
-                document.querySelectorAll(`span[id="${span.id}"]`).forEach(sp => {
-                    sp.classList.add('dragging')
-                    sp.classList.add('conflicting')
-                })
+            affectedSpans.forEach(sp => {
+                sp.classList.add('dragging')
+                sp.classList.add('conflicting')
+                sp.parentElement.parentElement.classList.add('conflicting')
             })
         }
 
@@ -1506,6 +1528,7 @@ It is provided as is under "MIT License"
                 .forEach(sp => {
                     sp.classList.remove('dragging')
                     sp.classList.remove('conflicting')
+                    sp.parentElement.parentElement.classList.remove('conflicting')
                 })
         }
 
@@ -1580,13 +1603,10 @@ It is provided as is under "MIT License"
         function getAffectedSpans(affectedCells) {
             let affectedSpans = []
             affectedCells.forEach(c => {
-                if (c.firstChild) {
-                    affectedSpans.push(c.firstChild)
-                } else {
-                    if (document.querySelector(`span[id="${c.id}"]`)) affectedSpans.push(document.querySelector(`span[id="${c.id}"]`))
-                }
+                affectedSpans = [...affectedSpans, ...Array.from(document.querySelectorAll(`span[id="${c.id}"]`))]
             })
             affectedSpans = affectedSpans.filter(sp => sp.id !== draggedElement.id)
+            affectedSpans = Array.from(new Set(affectedSpans))
             return affectedSpans
         }
 
@@ -1682,15 +1702,12 @@ It is provided as is under "MIT License"
                 setTimeout(() => el.classList.remove('spot-last-cell'), spotExpellDuration);
             })
 
-            // send affected cards to ware house
-            affectedSpans.forEach(span => {
-                if (!span) return
-                document.querySelectorAll(`span[id="${span.id}"]`).forEach(sp => {
-                    sp.setAttribute('col', warehouseColumnIndex)
-                    sp.removeAttribute('day')
-                    sp.removeAttribute('hour')
-                    tbody.rows[sp.getAttribute('row')].cells[warehouseColumnIndex].appendChild(sp)
-                })
+            // send affected cards to warehouse
+            affectedSpans.forEach(sp => {
+                sp.setAttribute('col', warehouseColumnIndex)
+                sp.removeAttribute('day')
+                sp.removeAttribute('hour')
+                tbody.rows[sp.getAttribute('row')].cells[warehouseColumnIndex].appendChild(sp)
             })
 
             //clean affected cells
@@ -1818,33 +1835,45 @@ It is provided as is under "MIT License"
 
         }
 
-        // swaps print-noprint for specific day
-        function dayNoPrint(day) {
+        // swaps show-hide for specific day
+        function dayShowHide(day) {
             const table = day.parentElement.parentElement.parentElement
+            const dayBtn = document.getElementById(day.id + 'btn')
+            const dayRows = document.querySelectorAll(`#dr${day.id}`)
 
-            if (day.classList.contains('strike')) {
+            if (day.classList.contains('display-none')) {
 
-                day.classList.remove('no-print')
-                day.classList.remove('strike')
-                day.title = 'Do not print'
+                day.classList.remove('display-none')
+                dayBtn.classList.remove('strike')
                 for (i = 0; i < hoursLength; i++) {
-                    table.tHead.rows[1].cells[(day.cellIndex - 1) * hoursLength + i].classList.remove('no-print')
+                    table.tHead.rows[1].cells[(day.cellIndex - 1) * hoursLength + i].classList.remove('display-none')
                     for (j = 0; j < table.tBodies[0].children.length; j++) {
-                        table.tBodies[0].rows[j].cells[(day.cellIndex - 1) * hoursLength + i + 1].classList.remove('no-print')
+                        table.tBodies[0].rows[j].cells[(day.cellIndex - 1) * hoursLength + i + 1].classList.remove('display-none')
                     }
+                    table.tFoot.rows[0].cells[(day.cellIndex - 1) * hoursLength + i + 1].classList.remove('display-none')
                 }
+
+                dayRows.forEach(d => {
+                    Array.from(d.children).forEach(c => c.classList.remove('display-none'))
+                })
+
 
             } else {
 
-                day.classList.add('no-print')
-                day.classList.add('strike')
-                day.title = 'Do print'
+                day.classList.add('display-none')
+                dayBtn.classList.add('strike')
                 for (i = 0; i < hoursLength; i++) {
-                    table.tHead.rows[1].cells[(day.cellIndex - 1) * hoursLength + i].classList.add('no-print')
+                    table.tHead.rows[1].cells[(day.cellIndex - 1) * hoursLength + i].classList.add('display-none')
                     for (j = 0; j < table.tBodies[0].children.length; j++) {
-                        table.tBodies[0].rows[j].cells[(day.cellIndex - 1) * hoursLength + i + 1].classList.add('no-print')
+                        table.tBodies[0].rows[j].cells[(day.cellIndex - 1) * hoursLength + i + 1].classList.add('display-none')
                     }
+                    table.tFoot.rows[0].cells[(day.cellIndex - 1) * hoursLength + i + 1].classList.add('display-none')
                 }
+
+                dayRows.forEach(d => {
+                    Array.from(d.children).forEach(c => c.classList.add('display-none'))
+                })
+
             }
 
         }
@@ -2041,16 +2070,22 @@ It is provided as is under "MIT License"
 
         function doToggleFooter() {
             const toggleFooter = document.getElementById('toggleFooter')
+            let footRow = document.querySelector(`.footRow`)
+            if (showFooter) {
+                footRow.classList.remove('display-none')
+                toggleFooter.title = "Toggle footer invisible"
+                toggleFooter.innerHTML = "&otimes;"
+            } else {
+                footRow.classList.add('display-none')
+                toggleFooter.title = "Toggle footer visible"
+                toggleFooter.innerHTML = "&oplus;"
+            }
             let allFootCells = Array.from(document.querySelectorAll(`.footer`))
             allFootCells.forEach(c => {
                 if (showFooter) {
-                    c.classList.remove('display-none')
-                    toggleFooter.title = "Toggle footer invisible"
-                    toggleFooter.innerHTML = "&otimes;"
+                    c.classList.remove('no-print')
                 } else {
-                    c.classList.add('display-none')
-                    toggleFooter.title = "Toggle footer visible"
-                    toggleFooter.innerHTML = "&oplus;"
+                    c.classList.add('no-print')
                 }
             })
             findMissingTmimata()
@@ -2173,16 +2208,17 @@ It is provided as is under "MIT License"
             hours.forEach(h => {
                 const cell = row.appendChild(h)
                 cell.removeAttribute('style')
+                cell.classList.remove('display-none')
                 cell.innerText = cell.title
             })
             // create tbody add rows and first cell with day names
             sampleTable.appendChild(document.createElement('tbody'))
             days.forEach(d => {
                 const row = sampleTable.tBodies[0].insertRow()
+                row.id = 'dr' + d.id
                 const cell = row.appendChild(d)
                 cell.removeAttribute('style')
                 cell.removeAttribute('colSpan')
-                //cell.title = 'Do not print'
             })
             return sampleTable
         }
@@ -2272,13 +2308,6 @@ It is provided as is under "MIT License"
                     cell.removeAttribute('style')
                 })
 
-                // get fisrt column cells with day names
-                // add classList to access them later and eventlistener to show-hide row when printing
-                const rows = Array.from(newTable.tBodies[0].rows)
-                rows.forEach(r => {
-                    r.cells[0].classList.add('day-print-noprint')
-                    r.cells[0].addEventListener('click', () => daysPrintNoprint(r.cells[0]))
-                })
 
                 // add table to DOM
                 table.parentElement.appendChild(newTable)
@@ -2317,26 +2346,6 @@ It is provided as is under "MIT License"
             }
         }
 
-        function daysPrintNoprint(cell) {
-            // get all days of printTeacherTables
-            const days = Array.from(document.querySelectorAll(`.day-print-noprint`))
-            const index = cell.parentElement.rowIndex
-            days.forEach(d => {
-                // if index is different continue to next
-                if (d.parentElement.rowIndex !== index) return
-                // toggle print - no-print
-                if (d.classList.contains('strike')) {
-                    d.classList.remove('strike')
-                    d.title = 'Do not print'
-                    d.parentElement.classList.remove('no-print')
-                } else {
-                    d.classList.add('strike')
-                    d.title = 'Do print'
-                    d.parentElement.classList.add('no-print')
-                }
-            })
-
-        }
 
         function printGroupsSchedule() {
             // get access to programTable
@@ -2420,8 +2429,6 @@ It is provided as is under "MIT License"
                 // create other cells of table
                 const rows = Array.from(newTable.tBodies[0].rows)
                 rows.forEach((r, idx) => {
-                    r.cells[0].classList.add('day-print-noprint')
-                    r.cells[0].addEventListener('click', () => daysPrintNoprint(r.cells[0]))
                     r.cells[0].style.minWidth = labelWidth
                     r.cells[0].style.maxWidth = labelWidth
                     const rowCells = newTableCells.filter(c => c.getAttribute('day') == Object.keys(daysIndexList)[idx])
