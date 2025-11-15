@@ -265,8 +265,8 @@ It is provided as is under "MIT License"
 
         .gth {
             position: fixed;
-            top: 1px;
-            right: 3px;
+            top: 2px;
+            right: 5px;
             color: rgb(155, 155, 155);
             text-decoration: none;
             font-size: 12px;
@@ -431,7 +431,7 @@ It is provided as is under "MIT License"
             title="Reload">&#10227;</div>
         <div id="aboutBtn" class="undo-redo-button display-inline-block no-print" title="About">&quest;</div>
         <div id="rtl" onclick="changeDirection()" class="undo-redo-button display-none no-print show-hide"
-            title="Change direction">&harr;</div>
+            title="Change direction">&lrarr;</div>
         <div id="down" onclick="downloadXml()" class="undo-redo-button display-none no-print show-hide"
             title="Download fet file">&dArr;</div>
         <div id="toggleFooter" onclick="toggleFooterVisible()" class="undo-redo-button display-none no-print show-hide"
@@ -439,8 +439,8 @@ It is provided as is under "MIT License"
         <div id="showSubject" class="undo-redo-button display-none no-print show-hide"
             title="Show/Hide subject&#10;Click left - right&#10;to set font size">&nbsp;&ctdot;&nbsp;
         </div>
-        <div id="setTileWidth" onclick="setTileWidth()" class="undo-redo-button display-none no-print show-hide"
-            title="Set width of cards">&harr;
+        <div id="setTileWidth" onclick="setTileWidth(event)" class="undo-redo-button display-none no-print show-hide"
+            title="Set width of cards&#10;Click left - right&#10;reduce - increase">&nbsp;&harr;&nbsp;
         </div>
         <div id="setTitle" onclick="setTitle()" class="undo-redo-button display-none no-print show-hide"
             title="Set title">&#9997;</div>
@@ -466,9 +466,9 @@ It is provided as is under "MIT License"
             </table>
         </div>
 
-        <div class="gth  no-print">
+        <div class="gth">
             <a class="a-gth" href="mailto:g.theodoroy@gmail.com?subject=FET-edit+print"
-                title="mail to: George Theodoroy">&copy; GΘ@2025</a>
+                title="mail to: George Theodoroy">&copy; FET-edit+print GΘ@2025</a>
         </div>
 
     </div>
@@ -1294,7 +1294,7 @@ It is provided as is under "MIT License"
                 const dayDiv = document.createElement('div')
                 const day = days[i].getElementsByTagName("Name")[0].textContent
                 dayDiv.innerText = days[i].getElementsByTagName("Name")[0].textContent + ' '
-                dayDiv.id = day + 'btn'
+                dayDiv.id = day + '-day-button'
                 dayDiv.style.marginInline = '1px'
                 dayDiv.style.fontSize = 'small'
                 dayDiv.classList.add("display-inline-block")
@@ -1496,22 +1496,6 @@ It is provided as is under "MIT License"
             const affectedSpans = getAffectedSpans(affectedCells)
             const message = getMessage(cell, affectedSpans)
 
-            const spWidth = parseInt(window.getComputedStyle(document.body).getPropertyValue('--tile-width'))
-
-            const dragElSize = draggedElement.getAttribute('w')
-            if (message.length) {
-                whiteboard.classList.remove('display-none')
-                whiteboard.innerText = message
-                whiteboard.animate({
-                    // left: clientX < window.innerWidth / 2 ? `${clientX + spWidth + spWidth * dragElSize + whiteboard.offsetWidth / 2}px` : `${clientX - spWidth - spWidth * dragElSize - whiteboard.offsetWidth / 2}px`,
-                    // top: clientY > window.innerHeight / 2 ? `${clientY - whiteboard.offsetHeight - spWidth}px` : `${clientY + spWidth}px`
-                    left: clientX > window.innerWidth / 2 ? `${window.innerWidth / 3 + clientX - window.innerWidth / 2}px` : `${window.innerWidth / 3 * 2 + clientX - window.innerWidth / 2}px`,
-                    top: `${window.innerHeight / 9}px`
-                }, { duration: 1000, fill: "forwards" })
-            } else {
-                whiteboard.classList.add('display-none')
-            }
-
             if (!allowDrop(cell)) e.dataTransfer.dropEffect = 'none'
 
             clearAffected()
@@ -1520,6 +1504,19 @@ It is provided as is under "MIT License"
                 sp.classList.add('conflicting')
                 sp.parentElement.parentElement.classList.add('conflicting')
             })
+
+            if (message.length) {
+                whiteboard.classList.remove('display-none')
+                whiteboard.innerText = message
+                whiteboard.animate({
+                    //left: clientX > window.innerWidth / 2 ? `${window.innerWidth / 3 + clientX - window.innerWidth / 2}px` : `${window.innerWidth / 3 * 2 + clientX - window.innerWidth / 2}px`,
+                    left: clientX > window.innerWidth / 2 ? `${window.innerWidth / 3}px` : `${window.innerWidth / 3 * 2}px`,
+                    top: `${window.innerHeight / 9}px`
+                }, { duration: 1000, fill: "forwards" })
+            } else {
+                whiteboard.classList.add('display-none')
+            }
+
         }
 
 
@@ -1838,10 +1835,10 @@ It is provided as is under "MIT License"
         // swaps show-hide for specific day
         function dayShowHide(day) {
             const table = day.parentElement.parentElement.parentElement
-            const dayBtn = document.getElementById(day.id + 'btn')
-            const dayRows = document.querySelectorAll(`#dr${day.id}`)
+            const dayBtn = document.getElementById(day.id + '-day-button')
+            const dayRows = document.querySelectorAll(`#day-row-${day.id}`)
 
-            if (day.classList.contains('display-none')) {
+            if (dayBtn.classList.contains('strike')) {
 
                 day.classList.remove('display-none')
                 dayBtn.classList.remove('strike')
@@ -1857,24 +1854,27 @@ It is provided as is under "MIT License"
                     Array.from(d.children).forEach(c => c.classList.remove('display-none'))
                 })
 
-
-            } else {
-
-                day.classList.add('display-none')
-                dayBtn.classList.add('strike')
-                for (i = 0; i < hoursLength; i++) {
-                    table.tHead.rows[1].cells[(day.cellIndex - 1) * hoursLength + i].classList.add('display-none')
-                    for (j = 0; j < table.tBodies[0].children.length; j++) {
-                        table.tBodies[0].rows[j].cells[(day.cellIndex - 1) * hoursLength + i + 1].classList.add('display-none')
-                    }
-                    table.tFoot.rows[0].cells[(day.cellIndex - 1) * hoursLength + i + 1].classList.add('display-none')
-                }
-
-                dayRows.forEach(d => {
-                    Array.from(d.children).forEach(c => c.classList.add('display-none'))
-                })
-
+                return
             }
+
+            const dayButtons = Array.from(document.querySelectorAll(`div[id$='-day-button']`))
+            const dayButtonsCount = dayButtons.length
+            const strikedDayButtonsCount = dayButtons.filter(el => el.classList.contains('strike')).length
+            if (strikedDayButtonsCount >= dayButtonsCount - 1) return
+
+            day.classList.add('display-none')
+            dayBtn.classList.add('strike')
+            for (i = 0; i < hoursLength; i++) {
+                table.tHead.rows[1].cells[(day.cellIndex - 1) * hoursLength + i].classList.add('display-none')
+                for (j = 0; j < table.tBodies[0].children.length; j++) {
+                    table.tBodies[0].rows[j].cells[(day.cellIndex - 1) * hoursLength + i + 1].classList.add('display-none')
+                }
+                table.tFoot.rows[0].cells[(day.cellIndex - 1) * hoursLength + i + 1].classList.add('display-none')
+            }
+
+            dayRows.forEach(d => {
+                Array.from(d.children).forEach(c => c.classList.add('display-none'))
+            })
 
         }
 
@@ -2215,12 +2215,42 @@ It is provided as is under "MIT License"
             sampleTable.appendChild(document.createElement('tbody'))
             days.forEach(d => {
                 const row = sampleTable.tBodies[0].insertRow()
-                row.id = 'dr' + d.id
+                row.id = 'day-row-' + d.id
                 const cell = row.appendChild(d)
                 cell.removeAttribute('style')
                 cell.removeAttribute('colSpan')
             })
+
+            const tfoot = document.createElement('tfoot')
+            const ftRow = tfoot.insertRow()
+            const ftCell = ftRow.insertCell()
+            ftCell.colSpan = hours.length + 1
+            ftCell.innerText = 'FET - edit + print ' + (new Date()).toLocaleString()
+            ftCell.style.textAlign = 'right'
+            ftCell.style.fontSize = 'small'
+            ftCell.style.border = 'none'
+
+            sampleTable.appendChild(tfoot)
+
             return sampleTable
+        }
+
+        function hideButtons() {
+            document.getElementById('toggleFooter').classList.remove('display-inline-block')
+            document.getElementById('toggleFooter').classList.add('display-none')
+            document.getElementById('prev').classList.remove('display-inline-block')
+            document.getElementById('prev').classList.add('display-none')
+            document.getElementById('next').classList.remove('display-inline-block')
+            document.getElementById('next').classList.add('display-none')
+        }
+
+        function showButtons() {
+            document.getElementById('toggleFooter').classList.remove('display-none')
+            document.getElementById('toggleFooter').classList.add('display-inline-block')
+            document.getElementById('prev').classList.remove('display-none')
+            document.getElementById('prev').classList.add('display-inline-block')
+            document.getElementById('next').classList.remove('display-none')
+            document.getElementById('next').classList.add('display-inline-block')
         }
 
         // show and print schedule per teacher
@@ -2234,12 +2264,9 @@ It is provided as is under "MIT License"
                 document.getElementById('printTeachers').title = 'Print Teachers Schedule'
                 document.getElementById('printGroups').classList.remove('display-none')
                 document.getElementById('printGroups').classList.add('display-inline-block')
-                document.getElementById('toggleFooter').classList.remove('display-none')
-                document.getElementById('toggleFooter').classList.add('display-inline-block')
-                document.getElementById('prev').classList.remove('display-none')
-                document.getElementById('prev').classList.add('display-inline-block')
-                document.getElementById('next').classList.remove('display-none')
-                document.getElementById('next').classList.add('display-inline-block')
+
+                showButtons()
+
                 // remove all printTeacher tables
                 const printTeacherTables = Array.from(document.querySelectorAll(`.print-table`))
                 printTeacherTables.forEach(t => {
@@ -2256,12 +2283,8 @@ It is provided as is under "MIT License"
             document.getElementById('printTeachers').title = 'Back'
             document.getElementById('printGroups').classList.remove('display-inline-block')
             document.getElementById('printGroups').classList.add('display-none')
-            document.getElementById('toggleFooter').classList.remove('display-inline-block')
-            document.getElementById('toggleFooter').classList.add('display-none')
-            document.getElementById('prev').classList.remove('display-inline-block')
-            document.getElementById('prev').classList.add('display-none')
-            document.getElementById('next').classList.remove('display-inline-block')
-            document.getElementById('next').classList.add('display-none')
+
+            hideButtons()
 
             // save original value of css var --tile-width to variable
             tileWidth = window.getComputedStyle(document.body).getPropertyValue('--tile-width')
@@ -2346,7 +2369,6 @@ It is provided as is under "MIT License"
             }
         }
 
-
         function printGroupsSchedule() {
             // get access to programTable
             const table = document.getElementById("programTable");
@@ -2360,12 +2382,9 @@ It is provided as is under "MIT License"
                 document.getElementById('printGroups').title = "Print Groups Schedule"
                 document.getElementById('printTeachers').classList.remove('display-none')
                 document.getElementById('printTeachers').classList.add('display-inline-block')
-                document.getElementById('toggleFooter').classList.remove('display-none')
-                document.getElementById('toggleFooter').classList.add('display-inline-block')
-                document.getElementById('prev').classList.remove('display-none')
-                document.getElementById('prev').classList.add('display-inline-block')
-                document.getElementById('next').classList.remove('display-none')
-                document.getElementById('next').classList.add('display-inline-block')
+
+                showButtons()
+
                 // remove all printTeacher tables
                 const printTeacherTables = Array.from(document.querySelectorAll(`.print-table`))
                 printTeacherTables.forEach(t => {
@@ -2382,12 +2401,8 @@ It is provided as is under "MIT License"
             document.getElementById('printGroups').title = 'Back'
             document.getElementById('printTeachers').classList.remove('display-inline-block')
             document.getElementById('printTeachers').classList.add('display-none')
-            document.getElementById('toggleFooter').classList.remove('display-inline-block')
-            document.getElementById('toggleFooter').classList.add('display-none')
-            document.getElementById('prev').classList.remove('display-inline-block')
-            document.getElementById('prev').classList.add('display-none')
-            document.getElementById('next').classList.remove('display-inline-block')
-            document.getElementById('next').classList.add('display-none')
+
+            hideButtons()
 
             // save original value of css var --tile-width to variable
             tileWidth = window.getComputedStyle(document.body).getPropertyValue('--tile-width')
@@ -2474,10 +2489,28 @@ It is provided as is under "MIT License"
             document.documentElement.style.setProperty('--tile-width', newTileWidth + 'px');
         }
 
-        function setTileWidth() {
+        function setTileWidth(event) {
+
             // save original value of css var --tile-width to variable
-            tileWidth = window.getComputedStyle(document.body).getPropertyValue('--tile-width')
-            let newTileWidth = prompt("Set width of cards in pixels. Default: 30", parseInt(tileWidth))
+            tileWidth = parseInt(window.getComputedStyle(document.body).getPropertyValue('--tile-width'))
+
+            let newTileWidth
+
+            const rect = event.target.getBoundingClientRect();
+            // Calculate the center X-coordinate of the div
+            const leftX = rect.left + rect.width / 4;
+            const rightX = rect.right - rect.width / 4;
+            // Get the X-coordinate of the click
+            const clickX = event.clientX;
+
+            if (clickX < leftX) {
+                newTileWidth = tileWidth - 2
+            } else if (clickX > rightX) {
+                newTileWidth = tileWidth + 2
+            } else {
+                newTileWidth = prompt("Set width of cards in pixels. Default: 30", tileWidth)
+            }
+
             if (!parseInt(newTileWidth)) return
             document.documentElement.style.setProperty('--tile-width', newTileWidth + 'px');
         }
