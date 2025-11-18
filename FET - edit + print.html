@@ -1458,9 +1458,9 @@ It is provided as is under "MIT License"
             // set background green at allowed for drop row
             setBackgroundGreen(draggedElement)
             // change drag status of cards so i can target in background cells
-            const spans = Array.from(document.querySelectorAll(`.drag-span`))
+            const spans = Array.from(document.querySelectorAll(`.drag-span`)).filter(el => el.id !== draggedElement.id)
             spans.forEach(el => {
-                if (el.id !== draggedElement.id) el.classList.add('no-drag')
+                el.classList.add('no-drag')
             })
         }
 
@@ -1486,6 +1486,14 @@ It is provided as is under "MIT License"
 
         function handleDragOver(e) {
             e.preventDefault();
+
+            // change drag status of draggedElement so i can target in background cell - this is necessary in chrome
+            if (event.target.tagName.toLowerCase() === 'span') {
+                document.querySelectorAll(`span[id="${draggedElement.id}"]`).forEach(sp => {
+                    sp.classList.add('no-drag');
+                })
+            }
+
             // highlight closer cell for drop
             const { clientX, clientY } = e
             const cell = e.target.closest('td');
