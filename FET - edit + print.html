@@ -641,7 +641,7 @@ It is provided as is under "MIT License"
             document.getElementById('container').style.display = 'none';
             document.getElementById('title').textContent = file.name;
             // loop through buttons with class 'show-hide' and set them visible
-            const showHide = Array.from(document.querySelectorAll(`.show-hide`))
+            const showHide = Array.from(document.querySelectorAll(`div.show-hide`))
             showHide.forEach(el => {
                 el.classList.remove('display-none')
                 el.classList.add('display-inline-block')
@@ -663,7 +663,7 @@ It is provided as is under "MIT License"
             const ConstraintActivityPreferredStartingTime = xmlDoc.evaluate('//fet/Time_Constraints_List/ConstraintActivityPreferredStartingTime', xmlDoc, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
 
             // get all cards
-            let allSpans = Array.from(document.querySelectorAll(`.drag-span`))
+            let allSpans = Array.from(document.querySelectorAll(`span.drag-span`))
 
             for (i = 0; i < ConstraintActivityPreferredStartingTime.snapshotLength; i++) {
                 xmlElement = ConstraintActivityPreferredStartingTime.snapshotItem(i)
@@ -1313,7 +1313,7 @@ It is provided as is under "MIT License"
             table.addEventListener('dragover', handleDragOver);
             table.addEventListener('drop', handleDrop);
 
-            const spans = Array.from(document.querySelectorAll(`.drag-span`))
+            const spans = Array.from(document.querySelectorAll(`span.drag-span`))
             spans.forEach(sp => {
                 sp.addEventListener('dragstart', handleDragStart);
                 sp.addEventListener('dragend', handleDragEnd);
@@ -1328,13 +1328,13 @@ It is provided as is under "MIT License"
                 };
             })
 
-            const teacherNameCells = Array.from(document.querySelectorAll(`.teacher-name`))
+            const teacherNameCells = Array.from(document.querySelectorAll(`td.teacher-name`))
             teacherNameCells.forEach(c => {
                 c.addEventListener('click', () => teacherNoPrint(c))
             })
 
 
-            const hourColCells = Array.from(document.querySelectorAll(`.hour`))
+            const hourColCells = Array.from(document.querySelectorAll(`td.hour`))
             hourColCells.forEach(c => {
                 c.onmouseover = function () {
                     if (this.getAttribute('info')) {
@@ -1349,13 +1349,13 @@ It is provided as is under "MIT License"
             })
 
             // clear backgrounds might be present ( and saved) when table was saved
-            const spotLastCell = Array.from(document.querySelectorAll('.spot-last-cell'))
+            const spotLastCell = Array.from(document.querySelectorAll('td.spot-last-cell'))
             spotLastCell.forEach(c => c.classList.remove('spot-last-cell'))
 
-            const spotExpelled = Array.from(document.querySelectorAll('.spot-expelled'))
+            const spotExpelled = Array.from(document.querySelectorAll('td.spot-expelled'))
             spotExpelled.forEach(c => c.classList.remove('spot-expelled'))
 
-            const highlighted = Array.from(document.querySelectorAll('.highlight'))
+            const highlighted = Array.from(document.querySelectorAll('td.highlight'))
             highlighted.forEach(c => c.classList.remove('highlight'))
 
             markBorder()
@@ -1451,26 +1451,26 @@ It is provided as is under "MIT License"
 
         function handleDragStart(e) {
             draggedElement = e.target;
-            document.querySelectorAll(`span[id="${draggedElement.id}"]`).forEach(sp => {
+            document.querySelectorAll(`span.drag-span[id="${draggedElement.id}"]`).forEach(sp => {
                 sp.classList.add('dragging');
             })
             e.dataTransfer.effectAllowed = 'move';
             // set background green at allowed for drop row
             setBackgroundGreen(draggedElement)
             // change drag status of cards so i can target in background cells
-            const spans = Array.from(document.querySelectorAll(`.drag-span`)).filter(el => el.id !== draggedElement.id)
+            const spans = Array.from(document.querySelectorAll(`span.drag-span:not([id="${draggedElement.id}"])`))
             spans.forEach(el => {
                 el.classList.add('no-drag')
             })
         }
 
         function handleDragEnd(e) {
-            document.querySelectorAll(`span[id="${draggedElement.id}"]`).forEach(sp => {
+            document.querySelectorAll(`span.drag-span[id="${draggedElement.id}"]`).forEach(sp => {
                 sp.classList.remove('dragging');
             })
             draggedElement.classList.remove('dragging');
             // set card drag status to default
-            const spans = Array.from(document.querySelectorAll(`.drag-span`))
+            const spans = Array.from(document.querySelectorAll(`span.drag-span`))
             spans.forEach(el => el.classList.remove('no-drag'))
 
             whiteboard.innerText = ''
@@ -1489,7 +1489,7 @@ It is provided as is under "MIT License"
 
             // change drag status of draggedElement so i can target in background cell - this is necessary in chrome
             if (event.target.tagName.toLowerCase() === 'span') {
-                document.querySelectorAll(`span[id="${draggedElement.id}"]`).forEach(sp => {
+                document.querySelectorAll(`span.drag-span[id="${draggedElement.id}"]`).forEach(sp => {
                     sp.classList.add('no-drag');
                 })
             }
@@ -1498,7 +1498,7 @@ It is provided as is under "MIT License"
             const { clientX, clientY } = e
             const cell = e.target.closest('td');
             cell.classList.add('highlight');
-            setTimeout(() => cell.classList.remove('highlight'), 200);
+            setTimeout(() => cell.classList.remove('highlight'), 300);
 
             const affectedCells = getAffectedCells(cell)
             const affectedSpans = getAffectedSpans(affectedCells)
@@ -1510,7 +1510,18 @@ It is provided as is under "MIT License"
             affectedSpans.forEach(sp => {
                 sp.classList.add('dragging')
                 sp.classList.add('conflicting')
-                sp.parentElement.parentElement.classList.add('conflicting')
+                const row = sp.parentElement.parentElement
+                const theadRowCount = row.parentElement.parentElement.tHead.rows.length
+                if (row.rowIndex - theadRowCount != draggedElement.getAttribute('row')) row.classList.add('conflicting')
+                // scrolls table to be seen affected rows if are out of visible window
+                // const rect = row.getBoundingClientRect();
+                // const rowTop = rect.top;
+                // const rowBottom = rect.bottom;
+                // if (rowTop < 0) {
+                //     row.scrollIntoView(true, { behavior: 'smooth', block: 'nearest' });
+                // } else if (rowBottom > window.innerHeight) {
+                //     row.scrollIntoView(false, { behavior: 'smooth', block: 'nearest' });
+                // }
             })
 
             if (message.length) {
@@ -1529,7 +1540,7 @@ It is provided as is under "MIT License"
 
 
         function clearAffected() {
-            Array.from(document.querySelectorAll('.conflicting'))
+            Array.from(document.querySelectorAll('span.conflicting'))
                 .forEach(sp => {
                     sp.classList.remove('dragging')
                     sp.classList.remove('conflicting')
@@ -1576,7 +1587,7 @@ It is provided as is under "MIT License"
             const dragElSize = draggedElement.getAttribute('w')
             const columnIndex = cell.getAttribute('col-idx')
             // find row/rows of draggedElement/draggedElements
-            const draggedSpansRows = Array.from(document.querySelectorAll(`span[id="${draggedElement.id}"]`)).map(el => el.getAttribute('row'))
+            const draggedSpansRows = Array.from(document.querySelectorAll(`span.drag-span[id="${draggedElement.id}"]`)).map(el => el.getAttribute('row'))
 
             if (!allowDrop(cell)) return []
 
@@ -1608,9 +1619,8 @@ It is provided as is under "MIT License"
         function getAffectedSpans(affectedCells) {
             let affectedSpans = []
             affectedCells.forEach(c => {
-                affectedSpans = [...affectedSpans, ...Array.from(document.querySelectorAll(`span[id="${c.id}"]`))]
+                affectedSpans = [...affectedSpans, ...Array.from(document.querySelectorAll(`span.drag-span[id="${c.id}"]:not([id="${draggedElement.id}"])`))]
             })
-            affectedSpans = affectedSpans.filter(sp => sp.id !== draggedElement.id)
             affectedSpans = Array.from(new Set(affectedSpans))
             return affectedSpans
         }
@@ -1677,7 +1687,7 @@ It is provided as is under "MIT License"
 
 
             // set card drag status to default
-            const spans = Array.from(document.querySelectorAll(`.drag-span`))
+            const spans = Array.from(document.querySelectorAll(`span.drag-span`))
             spans.forEach(el => el.classList.remove('no-drag'))
 
             // find conflicting cards
@@ -1731,7 +1741,7 @@ It is provided as is under "MIT License"
             })
 
             // append the card to drop cell and setAttibutes to cells
-            document.querySelectorAll(`span[id="${dragElId}"]`).forEach(sp => {
+            document.querySelectorAll(`span.drag-span[id="${dragElId}"]`).forEach(sp => {
                 const currentRow = sp.getAttribute('row')
                 tbody.rows[sp.getAttribute('row')].cells[columnIndex].appendChild(sp)
                 sp.setAttribute('col', columnIndex)
@@ -1844,7 +1854,7 @@ It is provided as is under "MIT License"
         function dayShowHide(day) {
             const table = day.parentElement.parentElement.parentElement
             const dayBtn = document.getElementById(day.id + '-day-button')
-            const dayRows = document.querySelectorAll(`#day-row-${day.id}`)
+            const dayRows = document.querySelectorAll(`tr#day-row-${day.id}`)
 
             if (dayBtn.classList.contains('strike')) {
 
@@ -1865,7 +1875,7 @@ It is provided as is under "MIT License"
                 return
             }
 
-            const dayButtons = Array.from(document.querySelectorAll(`div[id$='-day-button']`))
+            const dayButtons = Array.from(document.querySelectorAll(`div[id$="-day-button"]`))
             const dayButtonsCount = dayButtons.length
             const strikedDayButtonsCount = dayButtons.filter(el => el.classList.contains('strike')).length
             if (strikedDayButtonsCount >= dayButtonsCount - 1) return
@@ -1891,7 +1901,7 @@ It is provided as is under "MIT License"
             if (el.getAttribute('col') == warehouseColumnIndex) return
             const tbody = el.parentElement.parentElement.parentElement
             const table = tbody.parentElement
-            const existingElements = Array.from(document.querySelectorAll(`span[id="${el.id}"]`))
+            const existingElements = Array.from(document.querySelectorAll(`span.drag-span[id="${el.id}"]`))
             existingElements.forEach(el => {
                 el.setAttribute('col', warehouseColumnIndex)
                 el.classList.remove('warn-span')
@@ -2078,7 +2088,7 @@ It is provided as is under "MIT License"
 
         function doToggleFooter() {
             const toggleFooter = document.getElementById('toggleFooter')
-            let footRow = document.querySelector(`.footRow`)
+            let footRow = document.querySelector(`tr.footRow`)
             if (showFooter) {
                 footRow.classList.remove('display-none')
                 toggleFooter.title = "Toggle footer invisible"
@@ -2088,7 +2098,7 @@ It is provided as is under "MIT License"
                 toggleFooter.title = "Toggle footer visible"
                 toggleFooter.innerHTML = "&oplus;"
             }
-            let allFootCells = Array.from(document.querySelectorAll(`.footer`))
+            let allFootCells = Array.from(document.querySelectorAll(`td.footer`))
             allFootCells.forEach(c => {
                 if (showFooter) {
                     c.classList.remove('no-print')
@@ -2107,7 +2117,7 @@ It is provided as is under "MIT License"
         }
 
         function markBorder() {
-            const markBorder = Array.from(document.querySelectorAll(`.mark-border`))
+            const markBorder = Array.from(document.querySelectorAll(`td.mark-border`))
             markBorder.forEach(el => {
                 //if (document.documentElement.hasAttribute('dir')) {
                 if (document.getElementById('tablecontainer').hasAttribute('dir')) {
@@ -2138,7 +2148,7 @@ It is provided as is under "MIT License"
         // show/hide top-span with subject
         function showSubject() {
             // get all top-spans of cards that show subject
-            const topSpans = Array.from(document.querySelectorAll(`.top-span`))
+            const topSpans = Array.from(document.querySelectorAll(`span.top-span`))
             topSpans.forEach(el => {
                 if (el.classList.contains('display-none')) {
                     // make them visible and vertcal align bottom
@@ -2172,7 +2182,7 @@ It is provided as is under "MIT License"
             // Get the X-coordinate of the click
             const clickX = event.clientX;
 
-            const topSpans = Array.from(document.querySelectorAll(`.top-span`))
+            const topSpans = Array.from(document.querySelectorAll(`span.top-span`))
             // Determine if the click was on the left or right side
             if (clickX < leftX) {
                 topSpans.forEach(el => {
@@ -2276,7 +2286,7 @@ It is provided as is under "MIT License"
                 showButtons()
 
                 // remove all printTeacher tables
-                const printTeacherTables = Array.from(document.querySelectorAll(`.print-table`))
+                const printTeacherTables = Array.from(document.querySelectorAll(`table.print-table`))
                 printTeacherTables.forEach(t => {
                     table.parentElement.removeChild(t)
                 })
@@ -2381,7 +2391,7 @@ It is provided as is under "MIT License"
             // get access to programTable
             const table = document.getElementById("programTable");
 
-            const tbltds = table.querySelectorAll('.program')
+            const tbltds = table.querySelectorAll('td.program')
 
             // if table is not visible we make it visible
             if (table.classList.contains('display-none')) {
@@ -2394,7 +2404,7 @@ It is provided as is under "MIT License"
                 showButtons()
 
                 // remove all printTeacher tables
-                const printTeacherTables = Array.from(document.querySelectorAll(`.print-table`))
+                const printTeacherTables = Array.from(document.querySelectorAll(`table.print-table`))
                 printTeacherTables.forEach(t => {
                     table.parentElement.removeChild(t)
                 })
