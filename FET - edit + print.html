@@ -25,6 +25,7 @@ It is provided as is under "MIT License"
             --body-y-margin: 30px;
             --rotate: 15deg;
             --opacity: 90%;
+            --btn-size: 20px;
         }
 
         body {
@@ -154,6 +155,11 @@ It is provided as is under "MIT License"
             display: block;
         }
 
+        .display-button {
+            display: block;
+            /* display: inline-block; */
+        }
+
         .display-inline-block {
             display: inline-block;
         }
@@ -245,18 +251,22 @@ It is provided as is under "MIT License"
 
         #undo-redo {
             position: fixed;
-            top: 2px;
+            top: 5px;
             left: 5px;
         }
 
         .undo-redo-button {
-            margin: 0px 2px 0px 2px;
-            padding: 0px 5px 0px 5px;
+            margin-bottom: 4px;
+            /* padding: 2px; */
             background-color: #fafafa;
             border-radius: 4px;
             border: 1.5px solid;
             border-color: #c5bebe;
             cursor: pointer;
+            text-align: center;
+            vertical-align: middle;
+            min-width: var(--btn-size);
+            min-height: var(--btn-size);
         }
 
         #tablecontainer {
@@ -427,20 +437,24 @@ It is provided as is under "MIT License"
     </div>
 
     <div id="undo-redo">
-        <div id="refresh" onclick="window.location.reload()" class="undo-redo-button display-inline-block no-print"
+        <div id="refresh" onclick="window.location.reload()" class="undo-redo-button display-button no-print"
             title="Reload">&#10227;</div>
-        <div id="aboutBtn" class="undo-redo-button display-inline-block no-print" title="About">&quest;</div>
+        <div id="aboutBtn" class="undo-redo-button display-button no-print" title="About">&quest;</div>
         <div id="rtl" onclick="changeDirection()" class="undo-redo-button display-none no-print show-hide"
             title="Change direction">&lrarr;</div>
         <div id="down" onclick="downloadXml()" class="undo-redo-button display-none no-print show-hide"
             title="Download fet file">&dArr;</div>
         <div id="toggleFooter" onclick="toggleFooterVisible()" class="undo-redo-button display-none no-print show-hide"
             title="Toggle footer visible">&oplus;</div>
+        <div id="toggleScroll" onclick="scrollToViewAffectedRows = !scrollToViewAffectedRows;
+                this.innerHTML = scrollToViewAffectedRows ? '&times;' : '&udarr;';
+                this.title = scrollToViewAffectedRows ? 'Disable screen scroll' : 'Enable screen scroll'; "
+            class="undo-redo-button display-none no-print show-hide" title="Enable screen scroll">&udarr;</div>
         <div id="showSubject" class="undo-redo-button display-none no-print show-hide"
-            title="Show/Hide subject&#10;Click left - right&#10;to set font size">&nbsp;&ctdot;&nbsp;
+            title="Show/Hide subject&#10;Click left - right&#10;to set font size">&ctdot;
         </div>
         <div id="setTileWidth" onclick="setTileWidth(event)" class="undo-redo-button display-none no-print show-hide"
-            title="Set width of cards&#10;Click left - right&#10;reduce - increase">&nbsp;&harr;&nbsp;
+            title="Set width of cards&#10;Click left - right&#10;reduce - increase">&harr;
         </div>
         <div id="setTitle" onclick="setTitle()" class="undo-redo-button display-none no-print show-hide"
             title="Set title">&#9997;</div>
@@ -541,6 +555,7 @@ It is provided as is under "MIT License"
         const spotExpellDuration = 7000
         const excludeInactiveActivities = true
         const whiteboard = document.getElementById('whiteboard')
+        let scrollToViewAffectedRows = false
 
 
         // NN -> NodeName
@@ -644,7 +659,7 @@ It is provided as is under "MIT License"
             const showHide = Array.from(document.querySelectorAll(`div.show-hide`))
             showHide.forEach(el => {
                 el.classList.remove('display-none')
-                el.classList.add('display-inline-block')
+                el.classList.add('display-button')
             })
         }
 
@@ -1295,9 +1310,9 @@ It is provided as is under "MIT License"
                 const day = days[i].getElementsByTagName("Name")[0].textContent
                 dayDiv.innerText = days[i].getElementsByTagName("Name")[0].textContent + ' '
                 dayDiv.id = day + '-day-button'
-                dayDiv.style.marginInline = '1px'
+                dayDiv.style.margin = '1px'
                 dayDiv.style.fontSize = 'small'
-                dayDiv.classList.add("display-inline-block")
+                dayDiv.classList.add("display-button")
                 dayDiv.addEventListener('click', () => dayShowHide(document.getElementById(day)))
                 showHideDays.appendChild(dayDiv)
             }
@@ -1513,15 +1528,17 @@ It is provided as is under "MIT License"
                 const row = sp.parentElement.parentElement
                 const theadRowCount = row.parentElement.parentElement.tHead.rows.length
                 if (row.rowIndex - theadRowCount != draggedElement.getAttribute('row')) row.classList.add('conflicting')
-                // scrolls table to be seen affected rows if are out of visible window
-                // const rect = row.getBoundingClientRect();
-                // const rowTop = rect.top;
-                // const rowBottom = rect.bottom;
-                // if (rowTop < 0) {
-                //     row.scrollIntoView(true, { behavior: 'smooth', block: 'nearest' });
-                // } else if (rowBottom > window.innerHeight) {
-                //     row.scrollIntoView(false, { behavior: 'smooth', block: 'nearest' });
-                // }
+                if (scrollToViewAffectedRows) {
+                    // scrolls table to be seen affected rows if are out of visible window
+                    const rect = row.getBoundingClientRect();
+                    const rowTop = rect.top;
+                    const rowBottom = rect.bottom;
+                    if (rowTop < 0) {
+                        row.scrollIntoView(true, { behavior: 'smooth', block: 'nearest' });
+                    } else if (rowBottom > window.innerHeight) {
+                        row.scrollIntoView(false, { behavior: 'smooth', block: 'nearest' });
+                    }
+                }
             })
 
             if (message.length) {
@@ -2254,21 +2271,25 @@ It is provided as is under "MIT License"
         }
 
         function hideButtons() {
-            document.getElementById('toggleFooter').classList.remove('display-inline-block')
+            document.getElementById('toggleFooter').classList.remove('display-button')
             document.getElementById('toggleFooter').classList.add('display-none')
-            document.getElementById('prev').classList.remove('display-inline-block')
+            document.getElementById('toggleScroll').classList.remove('display-button')
+            document.getElementById('toggleScroll').classList.add('display-none')
+            document.getElementById('prev').classList.remove('display-button')
             document.getElementById('prev').classList.add('display-none')
-            document.getElementById('next').classList.remove('display-inline-block')
+            document.getElementById('next').classList.remove('display-button')
             document.getElementById('next').classList.add('display-none')
         }
 
         function showButtons() {
             document.getElementById('toggleFooter').classList.remove('display-none')
-            document.getElementById('toggleFooter').classList.add('display-inline-block')
+            document.getElementById('toggleFooter').classList.add('display-button')
+            document.getElementById('toggleScroll').classList.remove('display-none')
+            document.getElementById('toggleScroll').classList.add('display-button')
             document.getElementById('prev').classList.remove('display-none')
-            document.getElementById('prev').classList.add('display-inline-block')
+            document.getElementById('prev').classList.add('display-button')
             document.getElementById('next').classList.remove('display-none')
-            document.getElementById('next').classList.add('display-inline-block')
+            document.getElementById('next').classList.add('display-button')
         }
 
         // show and print schedule per teacher
@@ -2281,7 +2302,7 @@ It is provided as is under "MIT License"
                 // set buttons visible
                 document.getElementById('printTeachers').title = 'Print Teachers Schedule'
                 document.getElementById('printGroups').classList.remove('display-none')
-                document.getElementById('printGroups').classList.add('display-inline-block')
+                document.getElementById('printGroups').classList.add('display-block')
 
                 showButtons()
 
@@ -2299,7 +2320,7 @@ It is provided as is under "MIT License"
             table.classList.add('display-none')
             // set buttons invisible
             document.getElementById('printTeachers').title = 'Back'
-            document.getElementById('printGroups').classList.remove('display-inline-block')
+            document.getElementById('printGroups').classList.remove('display-block')
             document.getElementById('printGroups').classList.add('display-none')
 
             hideButtons()
@@ -2399,7 +2420,7 @@ It is provided as is under "MIT License"
                 // set buttons visible
                 document.getElementById('printGroups').title = "Print Groups Schedule"
                 document.getElementById('printTeachers').classList.remove('display-none')
-                document.getElementById('printTeachers').classList.add('display-inline-block')
+                document.getElementById('printTeachers').classList.add('display-block')
 
                 showButtons()
 
@@ -2417,7 +2438,7 @@ It is provided as is under "MIT License"
             table.classList.add('display-none')
             // set buttons invisible
             document.getElementById('printGroups').title = 'Back'
-            document.getElementById('printTeachers').classList.remove('display-inline-block')
+            document.getElementById('printTeachers').classList.remove('display-block')
             document.getElementById('printTeachers').classList.add('display-none')
 
             hideButtons()
