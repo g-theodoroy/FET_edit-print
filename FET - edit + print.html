@@ -177,11 +177,24 @@ It is provided as is under "MIT License"
 
             /* 	for browsers supporting webkit (such as chrome, firefox, safari etc.). */
             -webkit-transform: rotate(var(--rotate));
+
             display: inline-block;
         }
 
         .highlight {
-            background-color: #ddf314;
+            background-color: #ddf314 !important;
+        }
+
+        .dragged-element {
+            background-color: black !important;
+            color: white;
+            font-weight: 900;
+        }
+
+        .same-tmima {
+            background-color: black !important;
+            color: white;
+            /* font-weight: bold; */
         }
 
         .spot-expelled {
@@ -441,9 +454,13 @@ It is provided as is under "MIT License"
             title="Reload">&#10227;</div>
         <div id="aboutBtn" class="undo-redo-button display-button no-print" title="About">&quest;</div>
         <div id="rtl" onclick="changeDirection()" class="undo-redo-button display-none no-print show-hide"
-            title="Change direction">&lrarr;</div>
+            title="Change direction">&rarr;</div>
         <div id="down" onclick="downloadXml()" class="undo-redo-button display-none no-print show-hide"
             title="Download fet file">&dArr;</div>
+        <div id="sameCards" onclick="showSameCards = !showSameCards;
+                this.innerHTML = showSameCards ? '&times;' : '&star;';
+                this.title = showSameCards ? 'Do not highlight same group cards' : 'Highlight same group cards'; "
+            class="undo-redo-button display-none no-print show-hide" title="Highlight same group cards">&star;</div>
         <div id="toggleFooter" onclick="toggleFooterVisible()" class="undo-redo-button display-none no-print show-hide"
             title="Toggle footer visible">&oplus;</div>
         <div id="toggleScroll" onclick="scrollToViewAffectedRows = !scrollToViewAffectedRows;
@@ -549,6 +566,7 @@ It is provided as is under "MIT License"
         let subgroupsArray = []
         let noTeacher = false;
         let showFooter = false;
+        let showSameCards = false;
         let tileWidth = null;
         let initFontSize = '0.4rem';
         const showColors = true
@@ -1318,6 +1336,7 @@ It is provided as is under "MIT License"
             }
 
             eventListeners()
+            if (showSameCards) removeHighlightSameGroup()
             saveTable(table)
         }
 
@@ -1336,10 +1355,12 @@ It is provided as is under "MIT License"
                 sp.onmouseover = function () {
                     document.getElementById('whiteboard').innerText = this.getAttribute('info') ? this.getAttribute('info').replace(', ', '\n') : '';
                     document.getElementById('whiteboard').classList.remove('display-none');
+                    if (showSameCards) addHighlightSameGroup(this)
                 };
                 sp.onmouseout = function () {
                     document.getElementById('whiteboard').innerText = '';
                     document.getElementById('whiteboard').classList.add('display-none');
+                    if (showSameCards) removeHighlightSameGroup()
                 };
             })
 
@@ -1375,6 +1396,21 @@ It is provided as is under "MIT License"
 
             markBorder()
             findMissingTmimata()
+        }
+
+        function addHighlightSameGroup(el) {
+            let tmimata = el.getAttribute('tmima').split(',')
+            let spans = []
+            tmimata.forEach(tm => {
+                spans = [...spans, ...document.querySelectorAll(`span.drag-span[tmima*="${tm}"]`)]
+            })
+            spans = Array.from(new Set(spans))
+            spans.forEach(sp => sp.classList.add('same-tmima'))
+        }
+
+        function removeHighlightSameGroup() {
+            document.querySelectorAll(`span.drag-span`)
+                .forEach(sp => sp.classList.remove('same-tmima'))
         }
 
         // saves table to sessionStorage
@@ -1467,7 +1503,7 @@ It is provided as is under "MIT License"
         function handleDragStart(e) {
             draggedElement = e.target;
             document.querySelectorAll(`span.drag-span[id="${draggedElement.id}"]`).forEach(sp => {
-                sp.classList.add('dragging');
+                sp.classList.add('dragging', 'dragged-element');
             })
             e.dataTransfer.effectAllowed = 'move';
             // set background green at allowed for drop row
@@ -1480,10 +1516,6 @@ It is provided as is under "MIT License"
         }
 
         function handleDragEnd(e) {
-            document.querySelectorAll(`span.drag-span[id="${draggedElement.id}"]`).forEach(sp => {
-                sp.classList.remove('dragging');
-            })
-            draggedElement.classList.remove('dragging');
             // set card drag status to default
             const spans = Array.from(document.querySelectorAll(`span.drag-span`))
             spans.forEach(el => el.classList.remove('no-drag'))
@@ -1497,6 +1529,7 @@ It is provided as is under "MIT License"
 
             removeBackground(draggedElement)
             clearAffected()
+            clearElement(draggedElement)
         }
 
         function handleDragOver(e) {
@@ -1534,9 +1567,14 @@ It is provided as is under "MIT License"
                     const rowTop = rect.top;
                     const rowBottom = rect.bottom;
                     if (rowTop < 0) {
-                        row.scrollIntoView(true, { behavior: 'smooth', block: 'nearest' });
-                    } else if (rowBottom > window.innerHeight) {
-                        row.scrollIntoView(false, { behavior: 'smooth', block: 'nearest' });
+                        row.scrollIntoView(true, { behavior: 'smooth', block: 'start' });
+                    } else {
+                        if (rowBottom > window.innerHeight) {
+                            const affectedSpansRows = Array.from(document.querySelectorAll(`span.drag-span[id="${sp.id}"]`)).map(el => el.getAttribute('row'))
+                            const lastRowIndex = Math.max(...affectedSpansRows);
+                            row.parentElement.rows[lastRowIndex].style.scrollMarginBottom = parseInt(row.parentElement.parentElement.tFoot.offsetHeight) + 'px'
+                            row.parentElement.rows[lastRowIndex].scrollIntoView(false, { behavior: 'smooth', block: 'end' });
+                        }
                     }
                 }
             })
@@ -1567,7 +1605,9 @@ It is provided as is under "MIT License"
 
         // clean things after drop
         function clearElement(el) {
-            el.classList.remove('dragging');
+            document.querySelectorAll(`span.drag-span[id="${el.id}"]`).forEach(sp => {
+                sp.classList.remove('dragging', 'dragged-element');
+            })
             el = null;
         }
 
@@ -1785,6 +1825,7 @@ It is provided as is under "MIT License"
             clearElement(draggedElement)
 
             findMissingTmimata()
+            if (showSameCards) removeHighlightSameGroup()
             saveTable(table)
         }
 
@@ -1937,6 +1978,7 @@ It is provided as is under "MIT License"
             })
 
             findMissingTmimata()
+            if (showSameCards) removeHighlightSameGroup()
             saveTable(table)
         }
 
@@ -2109,7 +2151,7 @@ It is provided as is under "MIT License"
             if (showFooter) {
                 footRow.classList.remove('display-none')
                 toggleFooter.title = "Toggle footer invisible"
-                toggleFooter.innerHTML = "&otimes;"
+                toggleFooter.innerHTML = "&times;"
             } else {
                 footRow.classList.add('display-none')
                 toggleFooter.title = "Toggle footer visible"
@@ -2152,12 +2194,14 @@ It is provided as is under "MIT License"
             if (!direction) {
                 localStorage.setItem("direction", 'rtl')
                 document.getElementById('tablecontainer').setAttribute('dir', 'rtl')
+                document.getElementById('rtl').innerHTML = '&larr;'
             } else {
                 // document.documentElement.removeAttribute('dir')
                 document.getElementById('tablecontainer').removeAttribute('dir')
                 localStorage.removeItem("direction")
                 document.getElementById('prev').innerHTML = '&larr;'
                 document.getElementById('next').innerHTML = '&rarr;'
+                document.getElementById('rtl').innerHTML = '&rarr;'
             }
             markBorder()
         }
