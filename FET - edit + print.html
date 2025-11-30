@@ -467,15 +467,11 @@ It is provided as is under "MIT License"
             title="Change direction">&rarr;</div>
         <div id="down" onclick="downloadXml()" class="undo-redo-button display-none no-print show-hide"
             title="Download fet file">&dArr;</div>
-        <div id="sameCards" onclick="showSameCards = !showSameCards;
-                this.innerHTML = showSameCards ? '&times;' : '&star;';
-                this.title = showSameCards ? 'Do not highlight same group cards' : 'Highlight same group cards'; "
+        <div id="sameCards" onclick="showSameCards = !showSameCards; toggleShowSameCards()"
             class="undo-redo-button display-none no-print show-hide" title="Highlight same group cards">&star;</div>
         <div id="toggleFooter" onclick="toggleFooterVisible()" class="undo-redo-button display-none no-print show-hide"
             title="Toggle footer visible">&oplus;</div>
-        <div id="toggleScroll" onclick="scrollToViewAffectedRows = !scrollToViewAffectedRows;
-                this.innerHTML = scrollToViewAffectedRows ? '&times;' : '&udarr;';
-                this.title = scrollToViewAffectedRows ? 'Disable screen scroll' : 'Enable screen scroll'; "
+        <div id="toggleScroll" onclick="scrollToViewAffectedRows = !scrollToViewAffectedRows; doToggleScroll()"
             class="undo-redo-button display-none no-print show-hide" title="Enable screen scroll">&udarr;</div>
         <div id="showSubject" class="undo-redo-button display-none no-print show-hide"
             title="Show/Hide subject&#10;Click left - right&#10;to set font size">&ctdot;
@@ -1347,7 +1343,13 @@ It is provided as is under "MIT License"
 
             eventListeners()
             if (showSameCards) removeHighlightSameGroup()
+
+            doToggleFooter()
+            toggleShowSameCards()
+            doToggleScroll()
+
             saveTable(table)
+
         }
 
         // add eventListeners
@@ -2154,8 +2156,16 @@ It is provided as is under "MIT License"
             }
         });
 
+        function toggleShowSameCards() {
+            showSameCards ? localStorage.setItem('showSameCards', showSameCards) : localStorage.removeItem('showSameCards')
+            const sameCards = document.getElementById('sameCards')
+            sameCards.innerHTML = showSameCards ? '&times;' : '&star;';
+            sameCards.title = showSameCards ? 'Disable highlight same group cards' : 'Highlight same group cards';
+        }
+
         function toggleFooterVisible() {
             showFooter = !showFooter
+            showFooter ? localStorage.setItem('showFooter', showFooter) : localStorage.removeItem('showFooter')
             doToggleFooter()
         }
 
@@ -2181,6 +2191,14 @@ It is provided as is under "MIT License"
             })
             findMissingTmimata()
         }
+
+        function doToggleScroll() {
+            scrollToViewAffectedRows ? localStorage.setItem('scrollToViewAffectedRows', scrollToViewAffectedRows) : localStorage.removeItem('scrollToViewAffectedRows')
+            const toggleScroll = document.getElementById('toggleScroll')
+            toggleScroll.innerHTML = scrollToViewAffectedRows ? '&times;' : '&udarr;';
+            toggleScroll.title = scrollToViewAffectedRows ? 'Disable screen scroll' : 'Enable screen scroll';
+        }
+
 
         function setTitle() {
             let title = prompt('Input title to be printed', document.getElementById('title').textContent)
@@ -2273,17 +2291,6 @@ It is provided as is under "MIT License"
                 showSubject()
             }
         });
-
-
-        window.onload = () => {
-
-            if (localStorage.getItem("direction")) {
-                document.getElementById('tablecontainer').setAttribute('dir', 'rtl')
-            }
-        }
-
-        // clear session 
-        window.onbeforeunload = () => sessionStorage.clear()
 
         function createSampleTable() {
 
@@ -2634,6 +2641,21 @@ It is provided as is under "MIT License"
         function getKeyByValue(object, value) {
             return Object.keys(object).find(key => object[key] === value);
         }
+
+        window.onload = () => {
+
+            if (localStorage.getItem("direction")) {
+                document.getElementById('tablecontainer').setAttribute('dir', 'rtl')
+            }
+
+            showFooter = localStorage.getItem("showFooter") ? true : false
+            showSameCards = localStorage.getItem("showSameCards") ? true : false
+            scrollToViewAffectedRows = localStorage.getItem("scrollToViewAffectedRows") ? true : false
+
+        }
+
+        // clear session 
+        window.onbeforeunload = () => sessionStorage.clear()
 
     </script>
 
