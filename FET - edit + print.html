@@ -468,11 +468,12 @@ It is provided as is under "MIT License"
         <div id="down" onclick="downloadXml()" class="undo-redo-button display-none no-print show-hide"
             title="Download fet file">&dArr;</div>
         <div id="sameCards" onclick="showSameCards = !showSameCards; toggleShowSameCards()"
-            class="undo-redo-button display-none no-print show-hide" title="Highlight same group cards">&star;</div>
+            class="undo-redo-button display-none no-print show-hide" title="Enable highlight same group cards">&star;
+        </div>
         <div id="toggleFooter" onclick="toggleFooterVisible()" class="undo-redo-button display-none no-print show-hide"
-            title="Toggle footer visible">&oplus;</div>
+            title="Enable footer visible">&plusb;</div>
         <div id="toggleScroll" onclick="scrollToViewAffectedRows = !scrollToViewAffectedRows; doToggleScroll()"
-            class="undo-redo-button display-none no-print show-hide" title="Enable screen scroll">&udarr;</div>
+            class="undo-redo-button display-none no-print show-hide" title="Enable screen scroll">&vArr;</div>
         <div id="showSubject" class="undo-redo-button display-none no-print show-hide"
             title="Show/Hide subject&#10;Click left - right&#10;to set font size">&ctdot;
         </div>
@@ -2159,8 +2160,8 @@ It is provided as is under "MIT License"
         function toggleShowSameCards() {
             showSameCards ? localStorage.setItem('showSameCards', showSameCards) : localStorage.removeItem('showSameCards')
             const sameCards = document.getElementById('sameCards')
-            sameCards.innerHTML = showSameCards ? '&times;' : '&star;';
-            sameCards.title = showSameCards ? 'Disable highlight same group cards' : 'Highlight same group cards';
+            sameCards.innerHTML = showSameCards ? '&starf;' : '&star;';
+            sameCards.title = showSameCards ? 'Disable highlight same group cards' : 'Enable highlight same group cards';
         }
 
         function toggleFooterVisible() {
@@ -2174,12 +2175,12 @@ It is provided as is under "MIT License"
             let footRow = document.querySelector(`tr.footRow`)
             if (showFooter) {
                 footRow.classList.remove('display-none')
-                toggleFooter.title = "Toggle footer invisible"
-                toggleFooter.innerHTML = "&times;"
+                toggleFooter.title = "Disable footer visible"
+                toggleFooter.innerHTML = "&minusb;"
             } else {
                 footRow.classList.add('display-none')
-                toggleFooter.title = "Toggle footer visible"
-                toggleFooter.innerHTML = "&oplus;"
+                toggleFooter.title = "Enable footer visible"
+                toggleFooter.innerHTML = "&plusb;"
             }
             let allFootCells = Array.from(document.querySelectorAll(`td.footer`))
             allFootCells.forEach(c => {
@@ -2195,7 +2196,7 @@ It is provided as is under "MIT License"
         function doToggleScroll() {
             scrollToViewAffectedRows ? localStorage.setItem('scrollToViewAffectedRows', scrollToViewAffectedRows) : localStorage.removeItem('scrollToViewAffectedRows')
             const toggleScroll = document.getElementById('toggleScroll')
-            toggleScroll.innerHTML = scrollToViewAffectedRows ? '&times;' : '&udarr;';
+            toggleScroll.innerHTML = scrollToViewAffectedRows ? '&equals;' : '&vArr;';
             toggleScroll.title = scrollToViewAffectedRows ? 'Disable screen scroll' : 'Enable screen scroll';
         }
 
@@ -2646,6 +2647,7 @@ It is provided as is under "MIT License"
 
             if (localStorage.getItem("direction")) {
                 document.getElementById('tablecontainer').setAttribute('dir', 'rtl')
+                document.getElementById('rtl').innerHTML = '&larr;'
             }
 
             showFooter = localStorage.getItem("showFooter") ? true : false
