@@ -197,6 +197,15 @@ It is provided as is under "MIT License"
             /* font-weight: bold; */
         }
 
+        .same-mathima {
+            /*	for IE  */
+            transform: rotate(var(--rotate));
+            -ms-transform: rotate(var(--rotate));
+
+            /* 	for browsers supporting webkit (such as chrome, firefox, safari etc.). */
+            -webkit-transform: rotate(var(--rotate));
+        }
+
         .spot-expelled {
             background-color: #fdc9c9;
         }
@@ -1400,17 +1409,21 @@ It is provided as is under "MIT License"
 
         function addHighlightSameGroup(el) {
             let tmimata = el.getAttribute('tmima').split(',')
+            let mathima = el.querySelector('.top-span').innerText
             let spans = []
             tmimata.forEach(tm => {
                 spans = [...spans, ...document.querySelectorAll(`span.drag-span[tmima*="${tm}"]`)]
             })
             spans = Array.from(new Set(spans))
-            spans.forEach(sp => sp.classList.add('same-tmima'))
+            spans.forEach(sp => {
+                sp.classList.add('same-tmima')
+                if (sp.querySelector('.top-span').innerText == mathima) sp.classList.add('same-mathima')
+            })
         }
 
         function removeHighlightSameGroup() {
             document.querySelectorAll(`span.drag-span`)
-                .forEach(sp => sp.classList.remove('same-tmima'))
+                .forEach(sp => sp.classList.remove('same-tmima', 'same-mathima'))
         }
 
         // saves table to sessionStorage
